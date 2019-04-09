@@ -1,0 +1,67 @@
+$brand-color: #77B02A;
+
+.splash-screen {
+    background: #fefefe;
+    height: 100%;
+
+    &__hero {
+        height: 60%;
+    }
+
+    &__img {
+        width: 125px;
+    }
+
+    &__title {
+        font-size: 26px;
+        color: $brand-color;
+    }
+
+    &__subtitle {
+        font-size: 18px;
+        color: #838383;
+        font-weight: 400;
+    }
+
+    &__cta-container {
+        background: $brand-color;
+        height: 40%;
+        z-index: 1;
+        position: relative;
+    
+        &:before,
+        &:after {
+            top: 0;
+            left: -25%;
+            z-index: -1;
+            width: 150%;
+            height: 75%;
+            background: inherit;
+            transform: rotate(-2deg);
+            transform-origin: 0 0;
+        }
+    
+        &:before {
+            height: 30%;
+            background: $brand-color;
+            transform: rotate(-10deg);
+            transform-origin: 3% 0;
+
+            @media (min-width: 610px) {
+                display: none;                
+            }
+        }
+    }
+
+    &__cta {
+        padding: 1rem !important;
+        border-radius: 0 !important;
+    }
+}
+
+.has-dd::before,
+.has-dd::after {
+    position: absolute;
+    content: '';
+    pointer-events: none;
+}

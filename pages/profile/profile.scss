@@ -1,0 +1,13 @@
+$brand-color: #77B02A;
+
+.profile-screen {
+    height: 100%;
+
+    &__avatar {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+        background: #eee;
+        border: 3px solid #77B02A;
+    }
+}

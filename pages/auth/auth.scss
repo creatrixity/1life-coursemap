@@ -1,0 +1,29 @@
+$brand-color: #77B02A;
+
+.auth-screen {
+    height: 100%;
+
+    &__img {
+        width: 100px;
+    }
+
+    &__title {
+        font-size: 26px;
+        color: $brand-color;
+    }
+
+    &__subtitle {
+        font-size: 18px;
+        color: #838383;
+        font-weight: 400;
+    }
+
+    &__cta {
+        padding: 1rem !important;
+        border-radius: 0 !important;
+    }
+
+    .auth-screen--btn {
+        padding: 1em 2em;
+    }
+}

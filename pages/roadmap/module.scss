@@ -1,0 +1,36 @@
+$brand-color: #77B02A;
+
+.module {
+  &__article {
+    &__text {
+      font-size: 20px;
+    }
+  }
+
+  &__link-card {
+    &__preview {
+      background: $brand-color;
+      width: 30%;
+    }
+
+    &__content {
+      width: 70%;
+    }
+
+    &__title {
+      color: $brand-color;
+    }
+  }
+}
+
+.module__link-card--disabled {
+  .module__link-card {
+    &__preview {
+      background: #eee;
+    }
+
+    &__title {
+      color: #ccc;
+    }
+  }
+}
