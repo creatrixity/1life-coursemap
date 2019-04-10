@@ -1,8 +1,9 @@
 import { Dispatch } from 'redux';
 import { AppActions } from '@Actions';
+import fetch from 'isomorphic-fetch';
 import * as utils from './utils'
 
-const hostAddress = 'http://localhost:3333/api';
+const hostAddress = 'http://127.0.0.1:3333/api';
 
 function prefixHostAddress (url:string) {
   return `${hostAddress}${url}`;

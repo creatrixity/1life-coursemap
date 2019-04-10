@@ -41,7 +41,7 @@
   "scripts": {
     "start:dev": "set PROXY_MODE=local && nodemon --watch app --watch app/server.js",
     "build": "set NODE_ENV=production next build",
-    "start": "set NODE_ENV=production node ./app/server.js",
+    "start": "set NODE_ENV=production && node ./app/server.js",
     "heroku-prebuild": "npm i --dev && NODE_ENV=production next build",
     "export": "set NODE_ENV=production && next export",
     "analyze": "BUNDLE_ANALYZE=both npm run build"
