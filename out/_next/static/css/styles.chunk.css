@@ -1,0 +1,47 @@
+.module-bar {
+  height: 80px;
+  background: #77B02A; }
+  .module-bar__title {
+    font-size: 18px;
+    font-weight: 500;
+    color: white; }
+  .module-bar--lesson {
+    margin-bottom: 35px; }
+
+.loader {
+  display: inline-block;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  -webkit-animation: spin 1s ease-in-out infinite; }
+
+@keyframes spin {
+  to {
+    -webkit-transform: rotate(360deg); } }
+
+@-webkit-keyframes spin {
+  to {
+    -webkit-transform: rotate(360deg); } }
+
+.module__article__text {
+  font-size: 20px; }
+
+.module__link-card__preview {
+  background: #77B02A;
+  width: 30%; }
+
+.module__link-card__content {
+  width: 70%; }
+
+.module__link-card__title {
+  color: #77B02A; }
+
+.module__link-card--disabled .module__link-card__preview {
+  background: #eee; }
+
+.module__link-card--disabled .module__link-card__title {
+  color: #ccc; }
+
+
+/*# sourceMappingURL=styles.chunk.css.map*/

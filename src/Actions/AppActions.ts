@@ -15,7 +15,7 @@ export const AppActions = {
 	}),
 
 	updateUserLesson : (payload:any, callback:Function) => {
-    return ((dispatch:Dispatch, getState:any, api:any) => {
+    return ((dispatch:Dispatch, {}, api:any) => {
 			dispatch(AppActions.Map({ isUpdatingUserLesson: true }))
 			
       return api.updateUserLesson(payload)
@@ -33,7 +33,7 @@ export const AppActions = {
   },
 
 	getUserLessons : (payload:any, callback:Function) => {
-    return ((dispatch:Dispatch, getState:any, api:any) => {			
+    return ((dispatch:Dispatch, {}, api:any) => {			
       return api.getUserLessons(payload)
         .then(api.checkStatus)
 				.then(api.toJSON)
@@ -45,7 +45,7 @@ export const AppActions = {
   },
 
 	getUserModules : (payload:any, callback:Function) => {
-    return ((dispatch:Dispatch, getState:any, api:any) => {			
+    return ((dispatch:Dispatch, {}, api:any) => {			
       return api.getUserModules(payload)
         .then(api.checkStatus)
 				.then(api.toJSON)
@@ -56,4 +56,46 @@ export const AppActions = {
     })
   },
 
+	fetchRoadmapModule : (payload:any, roadmapModulesContent:any) => {
+    const { module, id } = payload;
+
+    console.log(payload)
+
+    return ((dispatch:Dispatch, {}, api:any) => {	
+      dispatch(AppActions.Map({ isFetchingRoadmapModule: true }))
+      		
+      return api.fetchRoadmapModule(payload)
+        .then(api.checkStatus)
+        .then((response: any) => response.text())
+        .then((response:any) => { 
+          let newRoadmapModule = {
+            [module]: {
+              content: response
+            }
+          }
+
+          if (id) {
+            newRoadmapModule = {
+              [module]: {
+                ...roadmapModulesContent[module],
+                [id]: {
+                  content: response
+                }
+              }
+            }
+          }
+      
+          dispatch(AppActions.Map({
+            isFetchingRoadmapModule: false,
+            roadmapModulesContent: {
+              ...roadmapModulesContent,
+              ...newRoadmapModule
+            }
+          })
+          )
+
+          // return response;
+        })
+    })
+  },
 }

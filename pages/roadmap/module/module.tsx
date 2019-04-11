@@ -13,7 +13,6 @@ import { IHomePage, IStore } from '@Interfaces';
 
 import '../../roadmap/module.scss'
 import {
-	getModulesData,
 	getUser,
 	getToken
 } from '@Redux/utils'
@@ -36,20 +35,29 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 
 	componentDidMount () {
 		if (!getToken()) return this.props.router.push('/login')
-		const data = getModulesData();
+		const {
+			app,
+			getUserLessons,
+			fetchRoadmapModule
+		} = this.props;
+		const { roadmapModules, roadmapModulesContent } = app;
 
 		const module:string = this.props.router.query.module;
 		this.module = module;
-		this.content = data[module].content
-		this.moduleTitle = data[module].title
-		const moduleLessons = data[module].lessons;
+		fetchRoadmapModule({
+			module
+		}, roadmapModulesContent)
+
+		this.content = roadmapModules[module].content || 'Loading...';
+		this.moduleTitle = roadmapModules[module].title
+		const moduleLessons = roadmapModules[module].lessons;
 
 		this.lessons = moduleLessons
 		const user = getUser()
 		let moduleProgression;
 
-		this.props.getUserLessons({
-			moduleId: data[module].id,
+		getUserLessons({
+			moduleId: roadmapModules[module].id,
 			userId: user.id
 		}, (userLessons:any) => {
 			moduleProgression =  computeModulesProgression(userLessons, Object.keys(moduleLessons).length);
@@ -58,7 +66,7 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 				this.props.updateUserLesson({
 					lessonId: 1,
 					lessonsCount: Object.keys(moduleLessons).length,
-					moduleId: data[module].id,
+					moduleId: roadmapModules[module].id,
 					userId: user.id,
 					progression: 0
 				}, (lessons:any) => {
@@ -144,6 +152,9 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 	}
 
 	public render(): JSX.Element {
+		const { app } = this.props
+		const { roadmapModulesContent } = app;
+
 		return (
 			<div className="d-flex flex-column module" style={{ paddingTop: '100px' }}>
 				<Head>
@@ -165,7 +176,7 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 
 				<section>
 					<div className={'container'}>
-						{convert(this.content)}
+						{convert(roadmapModulesContent[this.module] ? roadmapModulesContent[this.module].content : 'Loading...')}
 						<section className={'row'}>
 							<div className={'col-12'}>
 								{this.renderUpcomingLinks()}
@@ -190,7 +201,8 @@ const mapStateToProps = (state: IStore) => {
 const mapDispatchToProps = (dispatch: Dispatch) => (
 	{
 		updateUserLesson: bindActionCreators(AppActions.updateUserLesson, dispatch),
-		getUserLessons: bindActionCreators(AppActions.getUserLessons, dispatch)
+		getUserLessons: bindActionCreators(AppActions.getUserLessons, dispatch),
+		fetchRoadmapModule: bindActionCreators(AppActions.fetchRoadmapModule, dispatch),
 	}
 );
 

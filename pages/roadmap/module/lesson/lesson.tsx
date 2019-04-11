@@ -14,8 +14,6 @@ import { IHomePage, IStore } from '@Interfaces';
 
 import ReactPlayer from 'react-player';
 
-import data from '../data';
-
 import '../../../roadmap/module.scss'
 import {
 	getUser,
@@ -23,7 +21,7 @@ import {
 } from '@Redux/utils';
 import { computeModulesProgression } from '../../../../src/Helpers/index';
 
-export class LessonOnePage extends React.Component<IHomePage.IProps, IHomePage.IState> {
+export class LessonPage extends React.Component<IHomePage.IProps, IHomePage.IState> {
 	private content = '';
 	private lessonId:any = null;
 	private module:any = null;
@@ -43,29 +41,29 @@ export class LessonOnePage extends React.Component<IHomePage.IProps, IHomePage.I
 	componentDidMount () {
 		if (!getToken()) return this.props.router.push('/login')
 
-		const { lesson } = this.props.router.query;
-		const module:any = this.props.router.query.module;
+		const { app, router, fetchRoadmapModule } = this.props
+
+		const { lesson, module } = router.query;
+		const { roadmapModules, roadmapModulesContent } = app;
 
 		const lessonId = parseInt(lesson.split('-')[1], 10);
-		const moduleLessons = data[this.module] ? data[this.module].lessons : {};
+		const moduleLessons = roadmapModules[this.module] ? roadmapModules[this.module].lessons : {};
 
-		const content = convert(data[module].lessons[lessonId].content, {
-			transform: {
-				reactplayer: (props:any) => <ReactPlayer url={props.url} width={'100%'} light playing />
-			}
-		})
+		fetchRoadmapModule({
+			module,
+			id: lessonId
+		}, roadmapModulesContent)
 
-		this.content = content;
 		this.lessonId = lessonId;
 		this.module = module;
-		this.moduleTitle = data[module].title;
-		this.nextModule = data[module].nextModule;
-		this.nextModuleData = data[this.nextModule];
+		this.moduleTitle = roadmapModules[module].title;
+		this.nextModule = roadmapModules[module].nextModule;
+		this.nextModuleData = roadmapModules[this.nextModule];
 		this.moduleLessons = moduleLessons;
 		
-		const moduleId = data[module].id;
+		const moduleId = roadmapModules[module].id;
 
-		const moduleLessonsCount = Object.keys(data[this.module].lessons).length;
+		const moduleLessonsCount = Object.keys(roadmapModules[this.module].lessons).length;
 
 		const user = getUser()
 
@@ -106,12 +104,13 @@ export class LessonOnePage extends React.Component<IHomePage.IProps, IHomePage.I
 	}
 
 	public renderUpcomingLinks(): JSX.Element {
-		const nextLesson = this.module ? data[this.module].lessons[this.lessonId + 1] : {};
+		const { roadmapModules } = this.props.app;
+		const nextLesson = this.module ? roadmapModules[this.module].lessons[this.lessonId + 1] : {};
 		const hasValidNextLesson = nextLesson ? Object.keys(nextLesson).length > 0: false;
 		const nextLessonTitle =  hasValidNextLesson ? nextLesson.title : '';
 		const nextLessonType =  hasValidNextLesson ? nextLesson.type : '';
-		const isAtLastLesson = data[this.module] ?
-			(this.lessonId === Object.keys(data[this.module].lessons).length)
+		const isAtLastLesson = roadmapModules[this.module] ?
+			(this.lessonId === Object.keys(roadmapModules[this.module].lessons).length)
 			: false;
 
 		return (
@@ -147,6 +146,14 @@ export class LessonOnePage extends React.Component<IHomePage.IProps, IHomePage.I
 	}
 
 	public render(): JSX.Element {
+		const { app } = this.props;
+		const { roadmapModulesContent } = app;
+		const content = convert(roadmapModulesContent[this.module] ? roadmapModulesContent[this.module][this.lessonId].content : 'Loading...', {
+			transform: {
+				reactplayer: (props:any) => <ReactPlayer url={props.url} width={'100%'} light playing />
+			}
+		})
+
 		return (
 			<div className="d-flex flex-column module" style={{ paddingTop: '100px' }}>
 				<Head>
@@ -169,7 +176,7 @@ export class LessonOnePage extends React.Component<IHomePage.IProps, IHomePage.I
 				<section>
 					<div>
 						<section className={'mb-5 container'}>
-							{this.content}
+							{content}
 						</section>
 
 						<section className={'container'}>
@@ -191,8 +198,9 @@ const mapStateToProps = (state: IStore) => {
 
 const mapDispatchToProps = (dispatch: Dispatch) => (
 	{
-		updateUserLesson: bindActionCreators(AppActions.updateUserLesson, dispatch)
+		updateUserLesson: bindActionCreators(AppActions.updateUserLesson, dispatch),
+		fetchRoadmapModule: bindActionCreators(AppActions.fetchRoadmapModule, dispatch),
 	}
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(LessonOnePage);
+export default connect(mapStateToProps, mapDispatchToProps)(LessonPage);

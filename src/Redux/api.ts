@@ -84,6 +84,21 @@ function getUserModules (payload:Object) {
 }
 
 /**
+ * Fetches Roadmap Data
+ */
+function fetchRoadmapModule (payload:Object) {
+  return fetch(prefixHostAddress('/v1/getModuleData'), {
+    method: 'post',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${utils.getToken()}`
+    },
+    body: JSON.stringify(payload)
+  })
+}
+
+/**
  * Creates a user http request.
  */
 function authenticateUser (user:Object) {
@@ -161,6 +176,7 @@ export default {
   createUser,
   checkStatus,
   errorHandler,
+  fetchRoadmapModule,
   getUserLessons,
   getUserModules,
   setToken,

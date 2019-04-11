@@ -26,6 +26,7 @@ declare module IHomePage {
 		updateUserLesson?: any;
 		getUserLessons?: any;
 		getUserModules?: any;
+		fetchRoadmapModule?: any;
   }
     
 	export type IProps = IOwnProps & IStateProps & IDispatchProps;

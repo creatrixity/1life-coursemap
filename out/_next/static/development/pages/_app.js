@@ -4516,6 +4516,23 @@ module.exports = invariant;
 
 /***/ }),
 
+/***/ "./node_modules/isomorphic-fetch/fetch-npm-browserify.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/isomorphic-fetch/fetch-npm-browserify.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+// the whatwg-fetch polyfill installs the fetch() function
+// on the global object (window or self)
+//
+// Return that as the export for use in Webpack, Browserify etc.
+__webpack_require__(/*! whatwg-fetch */ "./node_modules/whatwg-fetch/fetch.js");
+module.exports = self.fetch.bind(self);
+
+
+/***/ }),
+
 /***/ "./node_modules/next-page-transitions/lib/PageTransition.js":
 /*!******************************************************************!*\
   !*** ./node_modules/next-page-transitions/lib/PageTransition.js ***!
@@ -14179,6 +14196,540 @@ module.exports = function(module) {
 
 /***/ }),
 
+/***/ "./node_modules/whatwg-fetch/fetch.js":
+/*!********************************************!*\
+  !*** ./node_modules/whatwg-fetch/fetch.js ***!
+  \********************************************/
+/*! exports provided: Headers, Request, Response, DOMException, fetch */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Headers", function() { return Headers; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Request", function() { return Request; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Response", function() { return Response; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DOMException", function() { return DOMException; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fetch", function() { return fetch; });
+var support = {
+  searchParams: 'URLSearchParams' in self,
+  iterable: 'Symbol' in self && 'iterator' in Symbol,
+  blob:
+    'FileReader' in self &&
+    'Blob' in self &&
+    (function() {
+      try {
+        new Blob()
+        return true
+      } catch (e) {
+        return false
+      }
+    })(),
+  formData: 'FormData' in self,
+  arrayBuffer: 'ArrayBuffer' in self
+}
+
+function isDataView(obj) {
+  return obj && DataView.prototype.isPrototypeOf(obj)
+}
+
+if (support.arrayBuffer) {
+  var viewClasses = [
+    '[object Int8Array]',
+    '[object Uint8Array]',
+    '[object Uint8ClampedArray]',
+    '[object Int16Array]',
+    '[object Uint16Array]',
+    '[object Int32Array]',
+    '[object Uint32Array]',
+    '[object Float32Array]',
+    '[object Float64Array]'
+  ]
+
+  var isArrayBufferView =
+    ArrayBuffer.isView ||
+    function(obj) {
+      return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+    }
+}
+
+function normalizeName(name) {
+  if (typeof name !== 'string') {
+    name = String(name)
+  }
+  if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
+    throw new TypeError('Invalid character in header field name')
+  }
+  return name.toLowerCase()
+}
+
+function normalizeValue(value) {
+  if (typeof value !== 'string') {
+    value = String(value)
+  }
+  return value
+}
+
+// Build a destructive iterator for the value list
+function iteratorFor(items) {
+  var iterator = {
+    next: function() {
+      var value = items.shift()
+      return {done: value === undefined, value: value}
+    }
+  }
+
+  if (support.iterable) {
+    iterator[Symbol.iterator] = function() {
+      return iterator
+    }
+  }
+
+  return iterator
+}
+
+function Headers(headers) {
+  this.map = {}
+
+  if (headers instanceof Headers) {
+    headers.forEach(function(value, name) {
+      this.append(name, value)
+    }, this)
+  } else if (Array.isArray(headers)) {
+    headers.forEach(function(header) {
+      this.append(header[0], header[1])
+    }, this)
+  } else if (headers) {
+    Object.getOwnPropertyNames(headers).forEach(function(name) {
+      this.append(name, headers[name])
+    }, this)
+  }
+}
+
+Headers.prototype.append = function(name, value) {
+  name = normalizeName(name)
+  value = normalizeValue(value)
+  var oldValue = this.map[name]
+  this.map[name] = oldValue ? oldValue + ', ' + value : value
+}
+
+Headers.prototype['delete'] = function(name) {
+  delete this.map[normalizeName(name)]
+}
+
+Headers.prototype.get = function(name) {
+  name = normalizeName(name)
+  return this.has(name) ? this.map[name] : null
+}
+
+Headers.prototype.has = function(name) {
+  return this.map.hasOwnProperty(normalizeName(name))
+}
+
+Headers.prototype.set = function(name, value) {
+  this.map[normalizeName(name)] = normalizeValue(value)
+}
+
+Headers.prototype.forEach = function(callback, thisArg) {
+  for (var name in this.map) {
+    if (this.map.hasOwnProperty(name)) {
+      callback.call(thisArg, this.map[name], name, this)
+    }
+  }
+}
+
+Headers.prototype.keys = function() {
+  var items = []
+  this.forEach(function(value, name) {
+    items.push(name)
+  })
+  return iteratorFor(items)
+}
+
+Headers.prototype.values = function() {
+  var items = []
+  this.forEach(function(value) {
+    items.push(value)
+  })
+  return iteratorFor(items)
+}
+
+Headers.prototype.entries = function() {
+  var items = []
+  this.forEach(function(value, name) {
+    items.push([name, value])
+  })
+  return iteratorFor(items)
+}
+
+if (support.iterable) {
+  Headers.prototype[Symbol.iterator] = Headers.prototype.entries
+}
+
+function consumed(body) {
+  if (body.bodyUsed) {
+    return Promise.reject(new TypeError('Already read'))
+  }
+  body.bodyUsed = true
+}
+
+function fileReaderReady(reader) {
+  return new Promise(function(resolve, reject) {
+    reader.onload = function() {
+      resolve(reader.result)
+    }
+    reader.onerror = function() {
+      reject(reader.error)
+    }
+  })
+}
+
+function readBlobAsArrayBuffer(blob) {
+  var reader = new FileReader()
+  var promise = fileReaderReady(reader)
+  reader.readAsArrayBuffer(blob)
+  return promise
+}
+
+function readBlobAsText(blob) {
+  var reader = new FileReader()
+  var promise = fileReaderReady(reader)
+  reader.readAsText(blob)
+  return promise
+}
+
+function readArrayBufferAsText(buf) {
+  var view = new Uint8Array(buf)
+  var chars = new Array(view.length)
+
+  for (var i = 0; i < view.length; i++) {
+    chars[i] = String.fromCharCode(view[i])
+  }
+  return chars.join('')
+}
+
+function bufferClone(buf) {
+  if (buf.slice) {
+    return buf.slice(0)
+  } else {
+    var view = new Uint8Array(buf.byteLength)
+    view.set(new Uint8Array(buf))
+    return view.buffer
+  }
+}
+
+function Body() {
+  this.bodyUsed = false
+
+  this._initBody = function(body) {
+    this._bodyInit = body
+    if (!body) {
+      this._bodyText = ''
+    } else if (typeof body === 'string') {
+      this._bodyText = body
+    } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+      this._bodyBlob = body
+    } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+      this._bodyFormData = body
+    } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+      this._bodyText = body.toString()
+    } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+      this._bodyArrayBuffer = bufferClone(body.buffer)
+      // IE 10-11 can't handle a DataView body.
+      this._bodyInit = new Blob([this._bodyArrayBuffer])
+    } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+      this._bodyArrayBuffer = bufferClone(body)
+    } else {
+      this._bodyText = body = Object.prototype.toString.call(body)
+    }
+
+    if (!this.headers.get('content-type')) {
+      if (typeof body === 'string') {
+        this.headers.set('content-type', 'text/plain;charset=UTF-8')
+      } else if (this._bodyBlob && this._bodyBlob.type) {
+        this.headers.set('content-type', this._bodyBlob.type)
+      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+        this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
+      }
+    }
+  }
+
+  if (support.blob) {
+    this.blob = function() {
+      var rejected = consumed(this)
+      if (rejected) {
+        return rejected
+      }
+
+      if (this._bodyBlob) {
+        return Promise.resolve(this._bodyBlob)
+      } else if (this._bodyArrayBuffer) {
+        return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+      } else if (this._bodyFormData) {
+        throw new Error('could not read FormData body as blob')
+      } else {
+        return Promise.resolve(new Blob([this._bodyText]))
+      }
+    }
+
+    this.arrayBuffer = function() {
+      if (this._bodyArrayBuffer) {
+        return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+      } else {
+        return this.blob().then(readBlobAsArrayBuffer)
+      }
+    }
+  }
+
+  this.text = function() {
+    var rejected = consumed(this)
+    if (rejected) {
+      return rejected
+    }
+
+    if (this._bodyBlob) {
+      return readBlobAsText(this._bodyBlob)
+    } else if (this._bodyArrayBuffer) {
+      return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+    } else if (this._bodyFormData) {
+      throw new Error('could not read FormData body as text')
+    } else {
+      return Promise.resolve(this._bodyText)
+    }
+  }
+
+  if (support.formData) {
+    this.formData = function() {
+      return this.text().then(decode)
+    }
+  }
+
+  this.json = function() {
+    return this.text().then(JSON.parse)
+  }
+
+  return this
+}
+
+// HTTP methods whose capitalization should be normalized
+var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+
+function normalizeMethod(method) {
+  var upcased = method.toUpperCase()
+  return methods.indexOf(upcased) > -1 ? upcased : method
+}
+
+function Request(input, options) {
+  options = options || {}
+  var body = options.body
+
+  if (input instanceof Request) {
+    if (input.bodyUsed) {
+      throw new TypeError('Already read')
+    }
+    this.url = input.url
+    this.credentials = input.credentials
+    if (!options.headers) {
+      this.headers = new Headers(input.headers)
+    }
+    this.method = input.method
+    this.mode = input.mode
+    this.signal = input.signal
+    if (!body && input._bodyInit != null) {
+      body = input._bodyInit
+      input.bodyUsed = true
+    }
+  } else {
+    this.url = String(input)
+  }
+
+  this.credentials = options.credentials || this.credentials || 'same-origin'
+  if (options.headers || !this.headers) {
+    this.headers = new Headers(options.headers)
+  }
+  this.method = normalizeMethod(options.method || this.method || 'GET')
+  this.mode = options.mode || this.mode || null
+  this.signal = options.signal || this.signal
+  this.referrer = null
+
+  if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+    throw new TypeError('Body not allowed for GET or HEAD requests')
+  }
+  this._initBody(body)
+}
+
+Request.prototype.clone = function() {
+  return new Request(this, {body: this._bodyInit})
+}
+
+function decode(body) {
+  var form = new FormData()
+  body
+    .trim()
+    .split('&')
+    .forEach(function(bytes) {
+      if (bytes) {
+        var split = bytes.split('=')
+        var name = split.shift().replace(/\+/g, ' ')
+        var value = split.join('=').replace(/\+/g, ' ')
+        form.append(decodeURIComponent(name), decodeURIComponent(value))
+      }
+    })
+  return form
+}
+
+function parseHeaders(rawHeaders) {
+  var headers = new Headers()
+  // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
+  // https://tools.ietf.org/html/rfc7230#section-3.2
+  var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ')
+  preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
+    var parts = line.split(':')
+    var key = parts.shift().trim()
+    if (key) {
+      var value = parts.join(':').trim()
+      headers.append(key, value)
+    }
+  })
+  return headers
+}
+
+Body.call(Request.prototype)
+
+function Response(bodyInit, options) {
+  if (!options) {
+    options = {}
+  }
+
+  this.type = 'default'
+  this.status = options.status === undefined ? 200 : options.status
+  this.ok = this.status >= 200 && this.status < 300
+  this.statusText = 'statusText' in options ? options.statusText : 'OK'
+  this.headers = new Headers(options.headers)
+  this.url = options.url || ''
+  this._initBody(bodyInit)
+}
+
+Body.call(Response.prototype)
+
+Response.prototype.clone = function() {
+  return new Response(this._bodyInit, {
+    status: this.status,
+    statusText: this.statusText,
+    headers: new Headers(this.headers),
+    url: this.url
+  })
+}
+
+Response.error = function() {
+  var response = new Response(null, {status: 0, statusText: ''})
+  response.type = 'error'
+  return response
+}
+
+var redirectStatuses = [301, 302, 303, 307, 308]
+
+Response.redirect = function(url, status) {
+  if (redirectStatuses.indexOf(status) === -1) {
+    throw new RangeError('Invalid status code')
+  }
+
+  return new Response(null, {status: status, headers: {location: url}})
+}
+
+var DOMException = self.DOMException
+try {
+  new DOMException()
+} catch (err) {
+  DOMException = function(message, name) {
+    this.message = message
+    this.name = name
+    var error = Error(message)
+    this.stack = error.stack
+  }
+  DOMException.prototype = Object.create(Error.prototype)
+  DOMException.prototype.constructor = DOMException
+}
+
+function fetch(input, init) {
+  return new Promise(function(resolve, reject) {
+    var request = new Request(input, init)
+
+    if (request.signal && request.signal.aborted) {
+      return reject(new DOMException('Aborted', 'AbortError'))
+    }
+
+    var xhr = new XMLHttpRequest()
+
+    function abortXhr() {
+      xhr.abort()
+    }
+
+    xhr.onload = function() {
+      var options = {
+        status: xhr.status,
+        statusText: xhr.statusText,
+        headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+      }
+      options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
+      var body = 'response' in xhr ? xhr.response : xhr.responseText
+      resolve(new Response(body, options))
+    }
+
+    xhr.onerror = function() {
+      reject(new TypeError('Network request failed'))
+    }
+
+    xhr.ontimeout = function() {
+      reject(new TypeError('Network request failed'))
+    }
+
+    xhr.onabort = function() {
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+
+    xhr.open(request.method, request.url, true)
+
+    if (request.credentials === 'include') {
+      xhr.withCredentials = true
+    } else if (request.credentials === 'omit') {
+      xhr.withCredentials = false
+    }
+
+    if ('responseType' in xhr && support.blob) {
+      xhr.responseType = 'blob'
+    }
+
+    request.headers.forEach(function(value, name) {
+      xhr.setRequestHeader(name, value)
+    })
+
+    if (request.signal) {
+      request.signal.addEventListener('abort', abortXhr)
+
+      xhr.onreadystatechange = function() {
+        // DONE (success or failure)
+        if (xhr.readyState === 4) {
+          request.signal.removeEventListener('abort', abortXhr)
+        }
+      }
+    }
+
+    xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+  })
+}
+
+fetch.polyfill = true
+
+if (!self.fetch) {
+  self.fetch = fetch
+  self.Headers = Headers
+  self.Request = Request
+  self.Response = Response
+}
+
+
+/***/ }),
+
 /***/ "./pages/_app.tsx":
 /*!************************!*\
   !*** ./pages/_app.tsx ***!
@@ -14386,247 +14937,10 @@ function (_App) {
 /*!**************************************!*\
   !*** ./pages/roadmap/module/data.ts ***!
   \**************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(module) {var modules = {
-  'who-am-i': {
-    id: 1,
-    title: 'Who Am I?',
-    content: "<section class=\"row mb-3\">\n        <div class=\"col-12\">\n          <article class=\"module__article\">\n            <h1 class=\"h3 module__article__title\">Module 1: Who Am I?</h1>\n            <p class=\"module__article__text serif-stack\">\n            Understanding who we are and what our purpose is in life is the foundation of true living. In this module, you\u2019ll be guided through a series of self-exploration activities to gain a deep understanding of who you are at your core.\n            </p>\n          </article>\n        </div>\n      </section>",
-    nextModule: 'my-magnificent-future',
-    lessons: {
-      1: {
-        title: 'Who am I? Roadmap Journey Starts here!',
-        type: 'lesson',
-        content: "          \n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Who am I? Roadmap Journey Starts here!</h1>\n                <h2 class=\"h5 module__article__title\">Module 1: Who Am I?</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack\">\n              Understanding who we are and what our purpose is in life is the foundation of true living. In this module, you\u2019ll be guided through a series of self-exploration activities to gain a deep understanding of who you are at your core.\n              </p>\n            </article>\n\n            <section class=\"container\">\n              <h2 class=\"h5 module__article__title\">Kickstart Video with Jenna <i>\"Seuss\"</i> Bayne</h2>\t\t\t\t\t\t\t\t\n            </section>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/c3xpzD9tloQ\"\n                width=\"100%\"\n              />\n            </div>\n\n            <article class=\"module__article container\">\n              <h3 class=\"h4 module__article__title\">Just a few more things to get you started! :)</h3>\n              <p class=\"module__article__text serif-stack\">\n                1. Under every \"Kickstart Video\" , (there's a new one at the beginning of each module!), you'll find your very own My 1Life Roadmap Workbook for that module!\n              </p>\n              <p class=\"lead font-weight-bold\">\n                <a class=\"text-brand text-underline'} href={'https://drive.google.com/file/d/0B_Skb-DqpicqUzcyVlhsQjBEdGc/view?usp=sharing\">GRAB YOUR WORKBOOK NOW, BEFORE MOVING ON!</a>\n              </p>\n\n              <blockquote class=\"blockquote\">\n                <p class=\"font-weight-bold\">\n                  SAVE IT FIRST, then you can type into the spaces and save your work each time you add to the document!\t\t\t\t\t\t\t\t\t\t\n                </p>\n              </blockquote>\n\n              <p class=\"lead font-weight-bold\">\n                <a class=\"text-brand text-underline\" href=\"https://drive.google.com/file/d/0B_Skb-DqpicqUzcyVlhsQjBEdGc/view?usp=sharing\">Download the Module 1 PDF Workbook!</a>\n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n                2. This course has three important components: <br />\n              </p>\n\n              <ul class=\"mb-3 serif-stack lead\">\n                <li>This web app with the Modules and Lessons</li>\n                <li>The videos within each lesson</li>\n                <li>The My 1Life Roadmap Workbook </li>\n              </ul>\n\n              <p class=\"module__article__text serif-stack\">\n\n                They all work together like pieces of the same puzzle.\n                This website is your guide - your compass!\n                It provides the overall direction, and as you follow along here, you'll watch the videos that provide guidance to complete the workbook!\n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n                3. Each module contains a series of tools laid out in a specific sequence for a specific purpose. So if you want to jump around - don't.  Ok?  Trust the process!  We've got your back - just keep moving forward!\n              </p>\n\n              <p class=\"module__article__text serif-stack mb-4\">\n                4. Within the My 1Life Roadmap course you'll be travelling down a R.O.A.D. where each letter represents a specific process or step that builds on the one before. They're all designed to help you integrate the content, and take action! (Plus, we kinda like the acronym!)\n              </p>\n\n              <aside class=\"mb-4\">\n                <p class=\"h3 mb-3\">R = Reflect</p>\n                <p class=\"h3 mb-3\">O = Observe</p>\n                <p class=\"h3 mb-3\">A = Act</p>\n                <p class=\"h3 mb-3\">D = Decide</p>\n              </aside>\n\n              <p class=\"module__article__text serif-stack\">\n                5. As you grow and evolve through the course, and through life, you're always welcome to flip back to review old material, dig a little deeper, re-watch the videos and redo any of the exercises. You have lifetime access to this content!\n              </p>\n              \n              <p class=\"module__article__text serif-stack\">\n                6. Lastly, there are recommended reading lists at the end of every module workbook. These are supplementary materials, they aren't necessary to complete the course.\n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n                The only \"extra\" resource we reference is \"The Richest Man in Babylon\" by George C. Clason  in Module 5. You'll need to familiarize yourself with this resource. Frankly, it's  a brilliant, short read that will change your life. If you can't get a copy,  just Google the title, and read about the concepts.\n              </p>\n\n              <blockquote class=\"blockquote\">\n                <p class=\"font-weight-bold\">\n                If you have questions about this lesson, contact us at <a href=\"mailto:info@1lifefullylived.org\">info@1lifefullylived.org</a>\n                </p>\n              </blockquote>\n\n            </article>\n          </div>    \n        "
-      },
-      2: {
-        title: 'My Life Balance Wheel',
-        type: 'tool',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Tool #1: My 1Life Balance Wheel</h1>\n                <h2 class=\"h3 module__article__title\">Hands on the Wheel!</h2>\n              </hgroup>\n\n              <blockquote class=\"blockquote serif-stack\">\n                <p class=\"serif-stack font-weight-bold\">\"There is no way to happiness. Happiness is the way.\"</p>\n                <footer class=\"blockquote-footer\"><cite title=\"Buddha\">Buddha</cite></footer>\n              </blockquote>\n\n              <p class=\"module__article__text serif-stack\">\n              One of the most important and insightful practices in life is to (continue) learning who you really are.  Deep inside.  At your core.\n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n              Often we go through our busy days forgetting about the most important things. We can focus so much on achieving, striving and accumulating in one or two areas of our lives that we neglect other areas or dimensions necessary for a truly fulfilling life.\n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n              Sometimes we climb up ladders and journey down paths with fierce determination, only to find that once we get there we aren't satisfied. It's important to remember that life isn't about the destination.  And this Roadmap isn't either.\n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n              Life is about being fulfilled NOW.  About finding balance which leads to happiness.\n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n              No matter what your circumstances are, you can experience happiness and joy every day - right now -  without waiting for external achievement. \n              </p>\n\n              <p class=\"module__article__text serif-stack\">\n                It's not about what you will get by committing to the My 1Life Roadmap. It's about who you choose to BE and what you choose to DO as you  journey through life.  Take care of these two things, and the HAVE will take care of itself.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Welcome to the first step. Let's get your hands on the wheel! \n              </p>\n\n              <hgroup class=\"mb-4\">\n                <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n                <h2 class=\"h3 module__article__title\">My Intention</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack\">\n              Your life is not made up of just one area. That's why when you focus solely on succeeding in your career or your finances, and neglect your intimate relationships, or health or spiritual growth, you're left feeling empty.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              It's important to find the right balance in yourlife to find fulfillment. Fulfillment is balance in many dimensions in your life, and this is the secret to ultimate success.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              REFLECT now on your intentions for this class. What brought you here?\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Answer the reflection questions in your workbook on page 4 with genuine, honest journal entries.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              The effort you put forth with these answer will directly influence your results for the course. Take your time, find a quiet place, and write from your heart.\n              </p>\n\n              <hgroup class=\"mb-4\">\n                <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n                <h2 class=\"h4 module__article__title\">Video 2: My 1Life Balance Wheel</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack\">\n              As you watch, jot down notes on page 4 of your workbook.  Your Balance Wheel is on page 5.  Pause the video as you complete your wheel, or watch it through and complete the wheel after.\n              </p>\n\n              <div class=\"player-wrapper mb-4\">\n                <ReactPlayer\n                  url=\"https://youtu.be/eXh_pekGSAw\"\n                  width=\"100%\"\n                />\n              </div>\n              \n              <div class=\"mb-4\">\n                <hgroup class=\"mb-4\">\n                  <h1 class=\"h2 module__article__title\">A (Act)</h1>\n                  <h2 class=\"h4 module__article__title\">Completing My 1Life Balance Wheel</h2>\n                </hgroup>\n\n                <p class=\"module__article__text serif-stack\">\n                You are in a magical place right now! This is the beginning, get excited!!  This is your chance to make some liberating life changes.\n                </p>\n\n                <p class=\"module__article__text serif-stack\">\n                As you complete your wheel, be brutally honest with your level of satisfaction in each dimension of your life. Clarity is power because once you understand \"the now\", you can make adjustments for later.\n                </p>\n              </div>\n\n              <div class=\"mb-3\">\n                <hgroup class=\"mb-4\">\n                  <h2 class=\"h4 module__article__title\">Roadmap Wheel of Life Written  Instructions</h2>\n                </hgroup>\n\n                <p class=\"module__article__text serif-stack\">\n                <strong>Step 1</strong> Fill in the 8 dimensions of your life that are most important to you on the blank lines around the wheel. Dimensions of your life may include but are not limited to, relationships with self, relationships with others, family, friends, parenting, career, business, finances, health, diet, fitness, personal growth, fun and recreation, contribution, spirituality/faith, sports, hobbies - the sky is the limit!\n                </p>\n                <p class=\"module__article__text serif-stack\">\n                <strong>Step 2</strong> Rate yourself on a scale from 0 to 10, 0 meaning you have neglected that dimension completely, and 10 meaning that you are elated with your effort, completely satisfied with your results. It may be helpful to ask yourself questions such as, \u201CHow do I currently feel in this dimension of my life? How have I been showing up in this area of my life? How would I like to feel in this area?\u201D\n                </p>\n                <p class=\"module__article__text serif-stack\">\n                <strong>Step 3</strong> Once you\u2019ve identified the number, visualize the center of the wheel being 0 and the outside edge being 10. In each dimension, put a dot or a line in the middle of the \"wedge\" where you estimate your rating to be.\u201D\n                </p>\n                <p class=\"module__article__text serif-stack\">\n                <strong>Step 4</strong> Then connect the dots or shade in each wedge to form a complete 360 degree connection around the whole wheel.\n                </p>\n                <p class=\"module__article__text serif-stack\">\n                <strong>Step 5</strong> What do you see?  What does this say about how you are living your life?\n                </p>\n\n                <p class=\"module__article__text serif-stack\">\n                As you complete your wheel, be brutally honest with your level of satisfaction in each dimension of your life. Clarity is power because once you understand \"the now\", you can make adjustments for later.\n                </p>\n              </div>\n\n            <div class=\"mb-5\">\n              <hgroup class=\"mb-4\">\n                <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n                <h2 class=\"h4 module__article__title\">Enhance My Life Balance</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack\">\n              Now that you have a visual depiction of your current life balance, decide how you want your balance to be different.  What are you committed to? What are you happy with? Are there areas that need more or less attention right now?  Thoughtfully answer these questions on page 6 in your workbook.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Before moving to the next lesson, choose to take one small action right NOW to balance out your wheel!\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Then celebrate!  Share what you have learned in our Facebook group if you like!  We'd love to hear from you.\n              </p>\n            </div>\n            <div class=\"mb-5\">\n              <em>\n                Helpful tip! Remember to complete the  Balance Wheel quarterly to keep you on track and to accurately measuring your progress.\n              </em>\n            </div>\n\n            <blockquote class=\"blockquote\">\n              <p class=\"font-weight-bold\">\n              If you have questions about this lesson, contact us at <a href=\"mailto:info@1lifefullylived.org\">info@1lifefullylived.org</a>\n              </p>\n            </blockquote>\n          </article>\n        </div>\n      "
-      },
-      3: {
-        title: 'My DISC Index',
-        type: 'tool',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #1: My 1Life Balance Wheel</h1>\n              <h2 class=\"h3 module__article__title\">Hands on the Wheel!</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\"I am not bound to win, but I am bound to be true. I am not bound to succeed, but I am bound to live up to the light I have.\"</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Abraham Lincoln\">Abraham Lincoln</cite></footer>\n            </blockquote>\n\n            <p class=\"module__article__text serif-stack\">\n            Who am I? What do I like? Why do I do the things I do?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Many of us go through life living out expectations we've inherited from others. We conform to outside desires and become disconnected from our own.  It is time to discover what you really want and more importantly go after it! My 1Life Fully Lived is yours to create!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Spend precious time and conscious effort getting to know YOU. You are unique, beautiful, strong and powerful. You matter. You have skills and talents that no one else has and the world is waiting for you to bring them to life! \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            It's time to go deeper and discover your unique  behavior and personality tendencies!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            This enlightening lesson will help you identify how to use your strengths to your benefit and move ahead down the roadmap path.\n            </p>\n\n            <div class=\"mb-4\">\n              <hgroup class=\"mb-4\">\n                <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n                <h2 class=\"h4 module__article__title\">Who Do I Think I AM?</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack\">\n              Just to get the ball rolling and kick this lesson into high gear - begin by reflecting on the person you've become so far in life - what do you know about yourself?\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Answer the questions in the workbook on page 7. \n              </p>\n            </div>\n\n            <div class=\"mb-4\">\n              <hgroup class=\"mb-4\">\n                <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n                <h2 class=\"h4 module__article__title\">Video 2:  The Advantages of Knowing My DISC</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack\">\n              The DISC Index or Profile is a common tool for discovering your natural and adaptive tendencies. If this is new to you, just listen to the video, and don't be concerned if you don't absorb it all the first time through.  If you've completed your DISC Index in the past, just keep an open-mind - and complete it again!  You never know what you may learn this time 'round!\n              </p>\n              <p class=\"module__article__text serif-stack\">\n                <em>\n                PS - there's room to jot down notes on page 8 of your workbook! \n                </em>\n              </p>\n            </div>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/4MUe8d8v-F8\"\n                width=\"100%\"\n              />\n            </div>\n\n            <div class=\"mb-4\">\n              <hgroup class=\"mb-4\">\n                <h1 class=\"h2 module__article__title\">A (Act)</h1>\n                <h2 class=\"h4 module__article__title\">What is MY DISC Index?!</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack\">\n              As you've learned, the DISC Index is based on four basic quadrants of behavioral preferences.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Understanding YOUR natural behavioral style allows you to better understand YOUR needs and motivations for success, as well as how you relate to others, and how others relate to you.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              1.  Take the DISC index now.  To get the most accurate reflection, be thoughtful and honest with your answers, but don't overthink it.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Typically your initial reaction is your truth.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Answer each question as how you truly believe you ARE - rather than who you would like to BE.  There are no right or wrong answers!  You are uniquely YOU - and you are greater than the sum of your parts - so no judgement.  Ok?\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              After you complete the Index, your results will be e-mailed to you.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              2.  Review your results - and answer the questions on page 9 and 10 in your workbook.\n              </p>\n              <p>\n                <a class=\"h2 font-weight-bold\" href=\"https://discpersonalitytesting.com/free-disc-test/\">DISC TEST</a>\n              </p>\n            </div>\n            <div>\n              <hgroup class=\"mb-4\">\n                <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n                <h2 class=\"h4 module__article__title\">USE My New Insight!</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack\">\n              Great!  You now have some very valuable insights about your behavioral tendencies.\n              </p>                  \n              <p class=\"module__article__text serif-stack\">\n              Consider how you can use this to your advantage.  Complete the self-reflection questions in your workbook on page 11.\n              </p>\n              <p class=\"module__article__text serif-stack\">\n              Congratulations!  You're already growing and developing a more amazing relationship with yourself.  Can you feel it?!  Wanna share?!  We'd love to hear what's coming up for you!\n              </p>\n\n              <blockquote class=\"blockquote\">\n                <p class=\"font-weight-bold\">\n                If you have questions about this lesson, contact us at <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n                </p>\n              </blockquote>\n            </div>\n          </article>\n        </div>\n        "
-      },
-      4: {
-        title: 'My Miracle Morning',
-        type: 'tool',
-        content: "\n          <article class=\"module__article container mb-5\">\n          <hgroup class=\"mb-3\">\n            <h1 class=\"h2 module__article__title\">Tool #3: My Miracle Morning</h1>\n            <h2 class=\"h3 module__article__title\">Hal Elrod's Miracle Morning</h2>\n          </hgroup>\n\n          <blockquote class=\"blockquote serif-stack\">\n            <p class=\"serif-stack font-weight-bold\">\n            \"Every new morning starts a new page in your story. Make it a great one today!\"</p>\n            <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n          </blockquote>\n\n          <p class=\"module__article__text serif-stack\">Change doesn't happen through force, willpower or chance.</p>\n          <p class=\"module__article__text serif-stack\">Change occurs through choice.</p>\n          <p class=\"module__article__text serif-stack\">\n          Only you can choose to raise your standards today and be better than who you were yesterday.  Only you can choose to fulfill your fullest potential in this amazing life you've been given.\n          </p>\n          <p class=\"module__article__text serif-stack\">\n          And the road to 1Life Fully Lived is not  easy.  It takes work.  You have to stay the course, you have to keep on keeping on, you have to step outside your comfort zone.  And,  sometimes, life rains on your parade.\n          </p>\n          <p class=\"module__article__text serif-stack\">And you have to choose to keep going forward anyway.</p>\n          <p class=\"module__article__text serif-stack\">\n          To keep moving, especially when you feel like quitting or detouring,  you need momentum, resilience, energy and a determined attitude to seize this day and make it epically impactful and purposeful.\n          </p>\n          <p class=\"module__article__text serif-stack\">You need the Morning Miracle!</p>\n          <p class=\"module__article__text serif-stack\">\n          The Morning Miracle is a routine to help you embrace a peak mental peak so you can show up powerfully, every day.  So you can keep moving forward through life with purpose and passion, and overcome ALL adversity you may encounter on your journey.\n          </p>\n          <p class=\"module__article__text serif-stack\">\n          Before you resist the early morning challenge, think about your life now - and how different it could be. Think who you want to BE and what you want to DO.\n          </p>\n          <p class=\"module__article__text serif-stack\">\n          Your life will not change if you do not change.\n          </p>\n          <p class=\"module__article__text serif-stack\">\n          You are the driver of this bus, captain of this ship and CEO of your life.  Grab what is yours!\n          </p>\n          <div class=\"mb-4\">\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h4 module__article__title\">My Current Morning</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            The way you begin your morning has the potential to dramatically shift your mindset for the rest of the day!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Beginning your day late, rushed and panicked creates a very different energy than being relaxed, grounded, focused and ready for anything.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            How do you typically start your days? What are your mornings like?  How might life be different if you started your morning with a stimulating mindset routine?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Consider how you would like to improve the productivity of your day, and how your life could dramatically shift.  Write your answers in your workbook on page 12. If you already have a routine, write about how it is working for you and how you could enhance it.\n            </p>  \n          </div>\n\n          <div class=\"mb-4\">\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h4 module__article__title\">Video 4: Creating MY Miracle Morning</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            There is space in your workbook on page 13 to fill in what S.A.V.E.R.S. stands for and write your personal notes.\n            </p>\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/kk62P8GC4LA\"\n                width=\"100%\"\n              />\n            </div>\n\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h4 module__article__title\">Commit to Practicing My Miracle Morning!</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            The Miracle Morning is a daily routine meant to empower high performance emotional states. By committing to this practice, and investing time and effort developing yourself, you'll become the person you want and need to be, to make it through your 1Life Roadmap journey. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The Miracle Morning: S.A.V.E.R.S.  \n            </p>\n\n            <h4 class=\"h5 module__article__title\">1.  SILENCE:</h4>\n            <p class=\"module__article__text serif-stack\">\n            Begin each day with a period of purposeful silence. This helps reduce your stress level and supports your ability to stay focused and present. Consider prayer, mediation or simply just sitting quietly with an open mind.\n            </p>\n\n            <h4 class=\"h5 module__article__title\">2. AFFIRMATIONS :</h4>\n            <p class=\"module__article__text serif-stack\">\n            Program yourself to be confident and successful simply by repeatedly telling yourself who you want to be, what you want to accomplish, and how you're going to accomplish it. With repetition, your sub-conscious mind begins to believe  it, act upon it, and eventually, manifest it.\n            </p>\n\n            <h4 class=\"h5 module__article__title\">3. VISUALIZATION:</h4>\n            <p class=\"module__article__text serif-stack\">\n            Seek to generate positive results by using your imagination to create mental pictures of specific behaviors and outcomes you desire.  Imagine exactly what you want to achieve or attain, and then mentally rehearse what you need to do to achieve or attain this outcome.\n            </p>\n\n            <h4 class=\"h5 module__article__title\">4. EXERCISE:</h4>\n            <p class=\"module__article__text serif-stack\">\n            Move your body to boost your energy, enhance your health, improve your self-confidence and emotional well-being, and find mental clarity, creativity and concentration!  That's a win-win-win all the way around!\n            </p>\n\n            <h4 class=\"h5 module__article__title\">5. READING:</h4>\n            <p class=\"module__article__text serif-stack\">\n            Fast track any area of your life by reading. Acquire knowledge, ideas and strategies you need to achieve your 1Life Fully Lived.\n            </p>\n\n            <h4 class=\"h5 module__article__title\">6. SCRIBING</h4>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Write freely in a journal to release any blocks, stories, thoughts and ideas that are stored in your head so you're free to start your day with a clear, open mind.\n            </p>\n\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n              NOW - Make it happen! What will your Miracle Morning look  like?  What do you need to do to in order to begin practicing the Miracle morning tomorrow? \n            </p>\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n              On page 14, note what you will do to set yourself up for success. Address any foreseeable obstacles and what you'll do in the (likely!) event one pops up.  How will you navigate weekends, travel, kids at home?  Be creative!\n            </p>\n          </div>\n\n          <hgroup class=\"mb-4\">\n            <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n            <h2 class=\"h4 module__article__title\">Schedule It.  And Follow Through!</h2>\n          </hgroup>\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n            The whole trajectory of your life could change by implementing the S.A.V.E.R.S.!!\n            </p>\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n            The choice is always yours, and so are your results. \n            </p>\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n            Use the checklist on page 15 to help you get set up.  On page 16 you'll find a tracking chart. Check off each day that you complete your Miracle Morning routine!            \n            </p>\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n            We suggest completing The Miracle Morning every day for at least 21 days straight! \n            </p>\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n            If you choose to embrace this, we guarantee you'll love the experience - and the magic - of waking up with purpose and intention!\n            </p>\n\n            <blockquote class=\"blockquote\">\n              <p class=\"font-weight-bold\">\n              If you have questions about this lesson, contact us at <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n              </p>\n            </blockquote>\n        </article>\n        "
-      },
-      5: {
-        title: 'Who am I?: Wrap Up',
-        type: 'lesson',
-        content: "\n        <article class=\"module__article container mb-5\">\n          <hgroup class=\"mb-4\">\n            <h1 class=\"h2 module__article__title\">Who am I?: Wrap Up</h1>\n            <h2 class=\"h4 module__article__title\">Module #1: Who Am I?</h2>\n          </hgroup>\n          <h3 class=\"h5 module__article__title\">Wrap It Up!</h3>\n          <div class=\"player-wrapper mb-4\">\n            <ReactPlayer\n              url=\"https://youtu.be/eGBbJZUXcTQ\"\n              width=\"100%\"\n            />\n          </div>\n          <p class=\"module__article__text serif-stack\">\n            The whole trajectory of your life could change by implementing the S.A.V.E.R.S.!!\n          </p>\n          <p class=\"module__article__text serif-stack\">\n            The choice is always yours, and so are your results. \n          </p>\n          <p class=\"module__article__text serif-stack\">\n            Write your intention for the week, what you are committed to accomplishing, who you want to BE, and how you want to show up for yourself! \n          </p>\n\n          <p class=\"font-weight-bold\">\n          If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n          </p>\n\n        </article>\n        "
-      }
-    }
-  },
-  'my-magnificent-future': {
-    id: 2,
-    title: 'My Magnificent Future',
-    content: "<section class=\"row mb-3\">\n        <div class=\"col-12\">\n          <article class=\"module__article\">\n            <h1 class=\"h3 module__article__title\">Module 2: My Magnificent Future!</h1>\n            <p class=\"module__article__text serif-stack\">\n            The secret to living an abundant life is being able to envision what you truly desire, holding it in your heart and knowing you deserve it. In this module, you\u2019ll discover what dreams and destinations are most meaningful for you, and how to connect with your deepest life purpose. You\u2019ll also strengthen your inner game with mindset skills to continually support your Roadmap journey.\n            </p>\n          </article>\n        </div>\n      </section>",
-    nextModule: 'my-plan4me',
-    lessons: {
-      1: {
-        title: 'My Magnificent Future! Turning Dreams into Reality',
-        type: 'lesson',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">My Magnificent Future! Turning Dreams into Reality</h1>\n                <h2 class=\"h5 module__article__title\">MODULE 2: MY MAGNIFICENT FUTURE!</h2>\n              </hgroup>\n            </article>\n\n            <section class=\"container\">\n              <h3 class=\"h5 module__article__title\">Kickstart Video with Jenna <i>\"Seuss\"</i> Bayne</h3>\n            </section>\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/YUpEYhMBYII\"\n                width=\"100%\"\n              />\n            </div>\n\n            <h2 class=\"h5 module__article__title\">WHOO HOO! ON TO MODULE 2!</h2>\n\n            <p class=\"module__article__text serif-stack\">\n            It's easy to log in to this course, and it's easy not to. The choice you're making to show up here is really admirable.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Be proud of yourself for showing up!\n            </p>\n            \n            <p class=\"module__article__text serif-stack\">\n            In the last module, you connected with who  you are at your core. Now, in Module 2, you're digging deep into your heart's desires to identify what YOUR 1Life Fully Lived truly looks like for YOU.\n            </p>\n            \n            <p class=\"module__article__text serif-stack\">\n            You won't be sleeping in this module,  but you WILL be dreaming.\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            Grab your Module 2 Workbook - then head on over to the next lesson...\n            </p>\n\n            <p class=\"mb-3\">\n              <a class=\"h4\" href=\"https://drive.google.com/open?id=0B_Skb-DqpicqNTBXNFlDMHZhenc\">\n                Module 2 Workbook\n              </a>\n            </p>\n\n            <p class=\"font-weight-bold\">\n            If you have questions about this lesson, contact us at <a href=\"mailto:info@1lifefullylived.org\">info@1lifefullylived.org</a>\n            </p>\n              \n          </div>\n          "
-      },
-      2: {
-        title: 'My 1Life Fully Lived Portrait',
-        type: 'tool',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #1: My 1Life Fully Lived Portrait</h1>\n              <h2 class=\"h3 module__article__title\">Creating My 1Life Portrait</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\n              \u201CAnything that has ever been created was first imagined.\u201D</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Ralph Emerson\">Ralph Emerson</cite></footer>\n            </blockquote>\n\n            <p class=\"module__article__text serif-stack\">\n              Two extremely powerful traits all humans have are our ability to dream, and the ability to create that dream.  In other words, we are the powerful creators of our own lives and have everything we need to create what  we really want. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n              The first step is identifying what we REALLY want. When we  have a target in mind, then we know where to aim. Without a set target, we don't know where to shoot. This can be life threatening!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n              <i>So, let's get dreamin'!</i>\n            </p>\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h4 module__article__title\">Listen to My Heart</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">Get comfortable and breathe deeply.</p>\n            <p class=\"module__article__text serif-stack\">Reflect on your balance wheel.</p>\n            <p class=\"module__article__text serif-stack\">\n            What do you love about your life?  What do want to change?  What do you want more of? \n            </p>            \n            <p class=\"module__article__text serif-stack\">\n            On page 3 of your workbook, compare and contrast what you want and don't want in your life as you move forward on your journey. \n            </p>            \n            <p class=\"module__article__text serif-stack mb-4\">\n            The Miracle Morning is a daily routine meant to empower high performance emotional states. By committing to this practice, and investing time and effort developing yourself, you'll become the person you want and need to be, to make it through your 1Life Roadmap journey. \n            </p>\n\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h4 module__article__title\">Video 2: Tim Rhode's 1Life Portrait</h2>\n            </hgroup>\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/zjD9kUrbqvk\"\n                width=\"100%\"\n              />\n            </div>\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h4 module__article__title\">Rocking Chair Brainstorm</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            Whoa, this exercise is powerful!  You will LOVE it! \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Beginning with the end in mind is helpful  because you actually see the goal as if it's already accomplished. It gives you the freedom to get clear on what you really want, and make any adjustments NOW before you get to your desired destination and realize it isn't what you really wanted after all. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Let's begin with a visualization practice. This is just a fun way to ease your mind into this \"backward design\" process. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Sit for three minutes (set your timer) and visualize your future as if you were 90 years-wise right now.  \n            </p>\n            <p class=\"module__article__text serif-stack\">\n              1.  In your most magnificent vision - your best version of your life - what are you doing?  Who are you with?  How do you feel?  \n            </p>            \n            <p class=\"module__article__text serif-stack\">\n              2.  Now, look back on your life as if you were playing a movie in your mind.  Notice all the events that have occurred, the people you are surrounded  by, how you look and how you feel, and whatever else you notice.  Allow your imagination to go where it wants to go. Surrender to the process.   \n            </p>            \n            <p class=\"module__article__text serif-stack\">\n              If you are having a hard time visualizing, don't be hard on yourself, sometimes it takes practice.  Just breath and play with any images that come up for you.  Your magnificent future is waiting for you. - all you have to do is create the dream...   \n            </p>\n            <p class=\"module__article__text serif-stack\">\n              What did you see?   \n            </p>            \n            <p class=\"module__article__text serif-stack\">\n              When you're ready, flip to page 5 of your workbook - the Rocking Chair!   \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Imagine the 90 year-wise version of you and you are looking at your life.\n            <strong>What do you want to be able to say about your past, your current situation and your future?</strong>  Place the highlights of your life around the rocking chair.   \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Imagine the 90 year-wise version of you and you are looking at your life.\n            <strong>What do you want to be able to say about your past, your current situation and your future?</strong>  Place the highlights of your life around the rocking chair.   \n            </p>\n\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h4 module__article__title\">Create My 1Life Portrait</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Now you are ready  to write the script for your 1Life Fully Lived Portrait!  You can write it by hand, or type it on your keyboard...\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            Write the vision of your life as you choose to create it.  Be specific, detailed and clear.  Refer to your balance wheel so you can include all areas of your life that are most important to you.  Add any others you want to include in the future.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Imagine the life you want to live and that anything is possible.   Time, money, resources are not an issue.   Don't worry about the how.   Don't hold back. Write from your heart on page 6.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n              <strong>WHAT DO YOU WANT YOUR LIFE TO LOOK LIKE?</strong> You get to choose!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            There is scientific evidence that what you write becomes implanted in your brain, in your subconscious, and amazing things happen if you just follow the process.  So don't skimp here.  Take your time and write out the vision for your Magnificent Future!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Next, if you have created your vision on your computer, print it out.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Hold and read your vision weekly.  Even daily!  Feel the emotions behind your dreams and let them resonate in every cell and fiber of your being.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Having trouble?! Check out this started example to help get your creative juices flowing. Allow yourself to dream big! This is the whole point of choosing to write when you are 90 years wise. We want you to step into your imagination. Developing your plan for the next year or five years keeps you constricted and practical. Step outside of logic and all the \"how is this ever going to happen\" mind stories, and just dream. You are the powerful creator of your own reality - create EXACTLY what YOU want. No boundaries,  no judgment, no rules!\n            </p>\n            <p class=\"mb-4\">\n              <a class=\"h4\" href=\"http://my1liferoadmap.1lifefullylived.org/wp-content/uploads/2016/12/90-Years-Wise-Example.pdf\">\n                90 Years Wise Starting Example\n              </a>\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            BONUS CHALLENGE: For extra-impact, create a vision board, video, narrative, or some other form of creation depicting your Magnificent Future Vision. Keep in it in a place you will see it every day.  Engage with it, meditate on it, FEEL what it is like to live your dream.\n            </p>\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n  \n          </article>\n        "
-      },
-      3: {
-        title: 'Tool #2: Discover Your Deepest WHYs',
-        type: 'tool',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #2: Discover Your Deepest WHYs</h1>\n              <h2 class=\"h3 module__article__title\">Finding Your Heart</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\n              \u201CWhen your why is big enough, you will find your how\u201D</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n            </blockquote>\n\n            <p class=\"module__article__text serif-stack\">Become unstoppable!</p>\n            <p class=\"module__article__text serif-stack\">\n              Life  can be like a roller coaster! Sometimes you feel you are rocking it and everything easily falls in to place  - and other times you feel you just can't win.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Expect it.  Embrace it.  Move through it.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            To set yourself up with the highest form of insurance against procrastination, utter defeat or other fear-type behavior, you must connect strongly to a compelling WHY.  When you become clear WHY you want to accomplish certain things - WHY they REALLY matter to you - and you can FEEL it within every fiber of your body, then you are wired to succeed!             </p>\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h4 module__article__title\">What Are Your Big Rocks?</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n              This exercise may be one of the most important things you do in your life. After visualizing your big future dream, it's easy to get stuck or feel overwhelmed because it's SO huge to think about! \n            </p>\n            <p class=\"module__article__text serif-stack\">\n              In this exercise you'll identify three \"big rocks\" for you to focus on for the rest of this class. These are the 3 most important desires you want to create.  Can they change? Absolutely.  Don't get blocked by having the idea that you can't change your mind! Can you add more down the line? You bet! We're just beginning with 3. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Watch the BIG ROCKS DEMONSTRATION VIDEO 3 now.  You may also want to read the Big Rocks story by Stephen Covey below.  \n            </p>            \n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/ONUzmow9IiU\"\n                width=\"100%\"\n              />\n            </div>\n            <h2 class=\"h4 module__article__title\">\n              <a href=\"http://my1liferoadmap.1lifefullylived.org/wp-content/uploads/2016/07/The-Big-Rocks-Demonstration.pdf\">Big Rocks Story</a>\n            </h2>\n\n            <p class=\"module__article__text serif-stack\">\n            Now, refer back  to your Balance Wheel and 1Life Portrait.  What are your three big rocks right now?\n            </p>            \n            <p class=\"module__article__text serif-stack\">\n            Label YOUR rocks  on page 7 in your workbook.\n            </p>            \n\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h4 module__article__title\">Video 4: Going Deep with your WHY</h2>\n            </hgroup>\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/ek-OrOgY6Z4\"\n                width=\"100%\"\n              />\n            </div>\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h4 module__article__title\">Take Your Rocks Deep With Your WHY!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Take your top 3 rocks through the \u201CDeeper WHY\u201D journey as described in the video. It's all set up for you in the workbook on page 9-10.   Simply fill in the chart.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Helpful hints: With each rock ask yourself these key life questions: Why does this matter to me? Why do I want thus? Who do I want to be in my life and how will this help me? Write down what comes up for you with each desired rock. Then continue going at least 4 deep with your why, asking questions such as, \"Why do I want this?\" and  \"Why does this matter to me?\" each time.\n            </p>\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h4 module__article__title\">Identify your Purpose</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            If you were truly honest with yourself, and took deliberate and considerate time with each level of your WHYs then you actually have found your core life purpose. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The final question to ask is, \"If you achieved your final WHY (your purpose for each), is there anything greater that could happen for you in your life?\"  \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            If there is not, you have found your purpose statement for that rock. If there is something greater, then this new vision is your final purpose for that rock. Write out your final purpose statements in the chart found in your workbook on page 11.   \n            </p>            \n            <p class=\"module__article__text serif-stack\">\n            Helpful Hint: you may wish to combine your purpose statements so you only have one. You may also find that they are all similar already and may just want to choose one, or you may want to write out all three and keep them separate. It's up to you!\n            </p>            \n            <p class=\"module__article__text serif-stack\">\n              If you are having a hard time visualizing, don't be hard on yourself, sometimes it takes practice.  Just breath and play with any images that come up for you.  Your magnificent future is waiting for you. - all you have to do is create the dream...   \n            </p>\n            <p class=\"module__article__text serif-stack\">\n              BONUS: Print and post your purpose statements in places you will see them daily. Read them during your Miracle Morning to remind you of your deepest WHY and inspire you to take consistent action!\n            </p>  \n          </article>\n        "
-      },
-      4: {
-        title: 'Tool #3: My Personal Board of Directors',
-        type: 'tool',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #3: My Personal Board of Directors</h1>\n              <h2 class=\"h3 module__article__title\">Power of Influence</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\n              \u201CIf you're the smartest one in the room, you're in the wrong room\u201D</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n            </blockquote>\n            <p class=\"module__article__text serif-stack\">\n            Every major company has board meetings weekly, monthly, or quarterly.  During these meetings the main topics are last quarter\u2019s results and future growth.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Having the right team is one of the most critical components for positive growth and success. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The business of your life should be handled with the same care and attention.\n            You are the CEO of your life, the driver of your vehicle and the Master of your Universe. And, as the BOSS, it's important for you to create your own <em>Personal Board of Directors</em>, to help hold you accountable to your self, and to help you keep  moving in the right direction. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Your Personal Board of Directors is composed of people and resources  that massively influence your life decisions and direction. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            As you discovered with the 1Life Balance Wheel, your life is composed of many different dimensions and each one  requires different expertise. So, your board should be diverse! For example, the person you take financial advice from may not be the same person you take health advice from, because they have different knowledge and experience. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            So, let's maximize our success by creating the support team around us we need! It's is time to create your board! \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            \"You are the average of the five people you spend most time with.\" - Jim Rohn.\n            </p>\n\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"My Influences</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">            \n            Think about all the things in your life that influence  you.\n            </p> \n\n            <p class=\"module__article__text serif-stack\">\n            Family, friends, social media, television, magazine titles, weather patterns and so many other external forces.\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            The wildest thing about this, is that most of the time you aren't even aware you're being influenced because it happens automatically. Something comes into your focus and this provokes your internal thoughts, feelings and behaviors.\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            All these external influences combine to create the stories of your life.  The stories you tell yourself that you aren't good enough, or that you can't do something.  The truth is that you are perfect just the way you are, and you don't need to change, your stories do!\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            To understand the dramatic ways you're influenced by external sources, answer the questions in your workbook on page 12!\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            As you look at your list, take a deep breath and recognize that these are just stories.  They aren't true.  They are an accumulation of all the things you've been lead to believe by the media, and even by well-meaning (or not) family, friends, and authority figures.  Understanding the stories or limiting beliefs you carry is the first step to letting them go so they no longer have power or influence over you.\n            </p>\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3\">Video 5: My Personal Board of Directors</h2>\n            </hgroup>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/fDQaBPXRVrM\"\n                width=\"100%\"\n              />\n            </div>\n\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3\">Crafting My Personal Board of Directors</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            There are many ways for you to go about crafting your Personal Board of Directors!\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            We'll share two ideas, or you can come up with your own!  Since your life is composed of multiple dimensions, your board should be diverse - the chart in your workbook on page 14 will guide you through the process.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n             The bottom line is that your Personal Board of Directors is a group of individuals and resources that inspire you, motivate you and support you with living your 1Life Fully Lived.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            1. You can choose 5 to 8 diverse individuals and allow them to guide you in all areas, perhaps some more than others depending on your focus at a particular time.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            For example, let's say your  best friend Dave is someone you want on your board. You might go to him for relationship advice because he has a thriving marriage, and he also happens to be a financial adviser. You trust his financial and relationship advice, but he is not very health oriented. Thus, you would put \"Dave\" in the chart under \"Relationships\" and in \"Finances\".  \n            </p>\n\n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">OR</h1>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            2. Start with the dimensions of your life and identify who you want  on your board for that specific dimension . As above, individuals and resources may overlap.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            No matter how you choose to craft your board, here are some final thoughts that apply to all methods:\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            1. The idea of crafting your Personal Board of Directors is to have a support system that generates wisdom, insight and perspective for you. Seek out people you aspire to be like and connect with them. You want to surround yourself with an environment that lifts you up to higher levels of success.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            2. Having a diverse board is essential. Having a board with people exactly like you won't always be helpful. Include different personalities, different ages, different skill-sets, different backgrounds and different levels of success. \n            </p>\n            <p class=\"module__article__text serif-stack\">            \n            3. Allow your board to change and evolve as you do, but be cautious that you are choosing wise, trust-worthy sources.  You will meet new people, grow to different levels and experience different needs so be open to evolution while also choosing wisely.\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            Finally, be playful with your board! Go back to your chart and include songs, quotes, books, podcasts, resources, and environments that support you.\n            </p>\n            <p class=\"module__article__text serif-stack\">            \n             Highlight, note, star or circle these influences for your next step. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            You've just crafted your board! Look at all the amazing support you have!\n            </p>\n            \n            <hgroup class=\"mb-4\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3\">HIRE Your Board!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Now that you've identified your board on paper, it's time to gather up your team and clear your space for those you want on your board. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            1. Begin by telling those you want on your board that they play an important role in your life, and how much you value your wisdom and support. This is often an honor for the receiving person so have fun with these conversations. If at all possible, connect with these people face to face or virtually. Take them to lunch and gain more insight and wisdom just by being in their presence. Spending time with thought leaders and supportive people will propel you forward.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            2. Identify those relationships that are no longer serving you.  What is best for you, your goals and ultimate success? \n            </p>\n            <p class=\"module__article__text serif-stack\">\n             It may not mean the end of a friendship but maybe you'll choose to spend less time with that person or persons. For example, maybe going out partying every Friday and Saturday night with your buddies is no longer serving you spiritually, mentally, physically or financially. You may need to find a new friend or group who supports your success goals and spend less times with the people who will keep you stuck.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Perhaps a conversation with your partner explaining why getting up at 5am to go to the gym is important to you, and that you appreciate their support with it. Your partner doesn't need to do it with you, but have the conversation that, in order for you achieve your goals, you need your partner to be understanding or  ____(fill in the blank) so you feel supported. Then offer to support your partner with one of his or her goals. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            3. Find someone in My 1Life Roadmap Community to have on your board and be on someone's board. This could be your accountability partner or maybe even a mastermind you create outside the course to support you with the roadmap  journey specifically. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            4. Finally, what quotes, podcasts, books, seminars, events and so on do you identify with and want to connect with on a regular basis? Set up your environment, organize your space and resources, and hang quotes on the wall! \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            JOB WELL DONE! Time for a break!\n            </p>\n          </article>\n          "
-      },
-      5: {
-        title: 'Tool #4: My Transition Story',
-        type: 'tool',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #4: My Transition Story</h1>\n              <h2 class=\"h3 module__article__title\">My Transition Story</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\n              \u201CHonor the space between no longer, and not yet.\u201D</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Nancy Levin\">Nancy Levin</cite></footer>\n            </blockquote>\n            <p class=\"module__article__text serif-stack\">\n            In order to take your life to the next level, you need to cultivate the mental fitness to make it happen. Knowing your deepest WHY is the first step to achieving powerful motivation to stay committed to our desires. Now ,we are taking our mental stamina to the next level.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            In this lesson, you'll learn an amazing strategy to calm your nervous system while you are transitioning to a new paradigm in your life. It's called My Magnificent Transition Story.  Practicing it daily allows you to move out of your sympathetic nervous system response (fight or flight stress response) into your parasympathetic nervous system response.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Why is this important?  Any time you begin to change, you can experience inner turmoil and resistance.  Your brain works to keep you \"safe\" (to keep you stuck) and manifests confusion, fear, anxiety, and procrastination, to name a few \"security systems\".  All these things work to stop you from taking risks, to stop you from growing and achieving your fullest potential.  \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            This state of change/stress causes the body and mind to react quickly. This happens when you feel  frustrated and overwhelmed, which can ultimately cause you to sabotage your efforts and do  things you don't want to do, (but do anyway!)\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            When you can come from a place of relaxation, with a clear mind, you can easily take inspired action to move forward in life, finding creative strategies and solutions to things that used to hold you back!\n            </p>\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">You Can Do This!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Think about your life journey up to this point and where you envision your life journey taking you.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Explore the feelings that come up for you. When you think about making it happen, how do you feel? Do you feel you have what it takes? Are you nervous?  Do you feel unworthy?  Do you feel empowered?  You probably feel MANY things - even conflicting things - journal these thoughts and feelings in your workbook on page 16. \n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            Remember - turning your dreams into reality is 85% mental!  It's the inner game of life.  It doesn't happen overnight, but it starts with being aware of the feelings and fears so you can work through them!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 5: My Magnificent Transition Story</h2>\n            </hgroup>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/vy9-nXxwu74\"\n                width=\"100%\"\n              />\n            </div>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Create Your Own Transition Story</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            Your Transition Story will help you as you experience your own transition through the roadmap journey. Your journey will have ups and downs, lots of uncertainty and loads of trial and error.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            And, it is what you are learning, who you are becoming and how you handle the disappointments, successes and exhaustion that really matters. \n            </p>\n            <p class=\"module__article__text serif-stack\">            \n            Fill in the writing prompts in your workbook on page 18 to create your own Transition Story. You cannot do this wrong, just speak from your heart.\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3 module__article__title\">Read My Transition Story Daily</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            Write out your story in one sequence in your workbook on page 19. Post this story around your environment and read it out loud daily. Stick a copy in your wallet or your purse, and read it before you take a risk to help center and calm your nerves. \n            </p>\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        "
-      },
-      6: {
-        title: 'My Magnificent Future: Wrap up',
-        type: 'lesson',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">My Magnificent Future: Wrap up</h1>\n              <h2 class=\"h3 module__article__title\">Module 2 Complete!</h2>\n            </hgroup>\n\n            <h3>Final Thoughts...</h3>\n\n          </article>\n\n          <div class=\"player-wrapper mb-4\">\n            <ReactPlayer\n              url=\"https://youtu.be/rNngtO4_KkY\"\n              width=\"100%\"\n            />\n          </div>\n\n            <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        "
-      },
-      7: {
-        title: 'Next Time…',
-        type: 'lesson',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Next Time\u2026</h1>\n              <h2 class=\"h3 module__article__title\">Next Time!    Module 3 My Plan4Me</h2>\n            </hgroup>\n\n            <h3>Final Thoughts...</h3>\n            <p class=\"module__article__text serif-stack\">\n            Without a plan, we don't know where we are going, and we can drift through life and never embrace our full potential. In this module, you'll create a plan to reach your destination, and identify the action steps to take you from where you are now, to where you want to go. You'll walk away knowing what checks points you want to reach on your journey, and how to get back on track when you come to a traffic jam, detour, bad weather or GPS malfunction!\n            </p>\n          </article>\n\n          <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        "
-      }
-    }
-  },
-  'my-plan4me': {
-    id: 3,
-    title: 'My Plan4Me!',
-    content: "<section class=\"row mb-3\">\n        <div class=\"col-12\">\n          <article class=\"module__article\">\n            <h1 class=\"h3 module__article__title\">Module 3: My Plan4Me!</h1>\n            <p class=\"module__article__text serif-stack\">\n            Without a plan, you don\u2019t know where you\u2019re going, and you can drift through life and never embrace your full potential.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            In this module, you\u2019ll identify the steps to take you from where you are now, to where you want to go.  You\u2019ll walk away knowing what checks points you want to reach on your journey, and how to get back on track when you come to a traffic jam, detour, bad weather or have a GPS malfunction!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The biggest difference between \u201Csuccess\u201D and \u201Cfailure\u201D is having a written plan to follow and taking inspired action daily.  The plan may well change \u2013 and that\u2019s fine \u2013 revise it along the way and keep moving forward!\n            </p>\n          </article>\n        </div>\n      </section>",
-    nextModule: 'financial-offense',
-    lessons: {
-      1: {
-        title: 'My Plan4Me! Journey Preparation',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">My Plan4Me! Journey Preparation</h1>\n              <h2 class=\"h5 module__article__title\">MY Plan4Me!</h2>\n            </hgroup>\n          </article>\n\n          <section class=\"container\">\n            <h2 class=\"h5 module__article__title\">Kickstart Video with Jenna <i>\"Seuss\"</i> Bayne</h2>\t\t\t\t\t\t\t\t\n          </section>\n\n          <div class=\"player-wrapper mb-4\">\n            <ReactPlayer\n              url=\"https://youtu.be/JeqTXDiy7Xw\"\n              width=\"100%\"\n            />\n          </div>\n\n          <article class=\"module__article container\">\n            <h3 class=\"h4 module__article__title\">Module 3! This is for ME!</h3>\n            <p class=\"module__article__text serif-stack\">\n            We are filling in the gap between where you are now, and where you want to be! \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Grab your Module  3 Workbook here and get ready to roll! \n            </p>\n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=0B_Skb-DqpicqQ2taUFRSZDFrU1E\">MODULE 3 WORKBOOK</a>\n            </p>\n          </article>\n        </div>\n        "
-      },
-      2: {
-        title: 'My DISC Index',
-        type: 'tool',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #1: Let\u2019s Make Some Plans</h1>\n              <h2 class=\"h3 module__article__title\">What's My Plan?</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\"Often, we spend more time planning our vacations than our lives.\"</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Jim Rohn\">Jim Rohn</cite></footer>\n            </blockquote>\n\n            <p class=\"module__article__text serif-stack\">\n            Holy moly! It is time to create your plan! This is exciting work - if you start to feel overwhelmed, or anxious - read your transition story out loud, and take a deep breath.  YOU CAN DO IT.   Your dream life is already becoming reality!\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            You\u2019ve identified where you are starting from and have a clear vision of where you want to go. It's now time to plan how you're going to get there - and then TAKE ACTION!\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            Success comes from DOING, not wanting, thinking or complaining. \n            </p>\n           \n            <p class=\"module__article__text serif-stack\">\n            Remember that progress does not mean perfection - so commit to the journey and take the next step, and the one after that, and the one after that.\n            </p>\n            <p class=\"module__article__text serif-stack\">           \n            You will face challenges, set-backs, obstacles and detours. Embrace them! They exist to teach you something you need to learn.\n            </p>\n           \n           BUCKLE IN! WE'RE ABOUT TO TAKE OFF! \n\n          <hgroup class=\"mb-3\">\n           <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n           <h2 class=\"h3 module__article__title\">What Do You Want?</h2>\n          </hgroup>\n\n          <p class=\"module__article__text serif-stack\">           \n           You've discovered where you are and have imagined where you want to go. Now, it's time to create the  plan and concrete action steps to make it happen! \n          </p>\n          <p class=\"module__article__text serif-stack\">           \n           Refer back to your My 1Life Portrait. With this magnificent future vision in your mind, think about what you would like to have happen <strong>in the next 10 years</strong>.\n          </p>\n          <p class=\"module__article__text serif-stack\">\n           Close your eyes for a few moments as you visualize the future events you\u2019d like to experience.\n          </p>\n          <p class=\"module__article__text serif-stack\">\n           Write down your thoughts in your workbook on page 3. \n          </p>\n          \n          <hgroup class=\"mb-3\">\n           <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n           <h2 class=\"h3 module__article__title\">Start with Your Vision and Work Backward!</h2>\n          </hgroup>\n\n          <h3 class=\"h5 module__article__title\">Choosing 1 Year, 5 Year, and 10 Year Goals</h3>\n           \n          <div class=\"player-wrapper mb-4\">\n           <ReactPlayer\n             url=\"https://youtu.be/6chi__tIMKo\"\n             width=\"100%\"\n           />\n         </div>\n          \n        <hgroup class=\"mb-3\">\n          <h1 class=\"h2 module__article__title\">A (Act)</h1>\n          <h2 class=\"h3 module__article__title\">Choose Your Goals!</h2>\n        </hgroup>\n\n        <p class=\"module__article__text serif-stack\">\n        Choose what you want to accomplish over the next 1, 5, and 10 years.  Don't worry about the how, yet.  Just set goals that will make you stretch and grow, and that will make the most difference in your 1Life Fully Lived.\n        </p>\n        <p class=\"module__article__text serif-stack\">\n        Complete the chart on  page 5 using the video as an example.\n        </p>\n\n        <hgroup class=\"mb-3\">\n          <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n        </hgroup>\n\n        <p class=\"module__article__text serif-stack\">\n          Where Do You Want to Be 1 Year From Today?\n        </p>\n        <p class=\"module__article__text serif-stack\">\n          You've broken down and organized your Magnificent Future into 10, 5 and 1 year goals. You've brainstormed all that you would like to have in each of those time frames.\n        </p>\n        <p class=\"module__article__text serif-stack\">\n          Now, it is time to focus in on your 1 year goals.\n        </p>\n        <p class=\"module__article__text serif-stack\">\n          Choose your top 3 goals for this year and write them in your workbook on page 6.\n        </p>\n        <p class=\"module__article__text serif-stack\">\n          Helpful hint: Think back to the Big Rocks visualization in module 2 - you may find it helpful to think of this activity like choosing your 3 big rocks for this year. \n        </p>\n          \n        <p class=\"module__article__text serif-stack\">\n          <em>JUST FOR FUN:  This is Tim's Five Year Vision that he wrote back in 1997. It's very detailed  which you may choose to do .  We thought it was pretty neat and wanted to share with you.  And, by the way, everything he wrote happened - that's the power of having a dream and a plan - and taking action!</em>\n        </p>\n\n        <p class=\"lead font-weight-bold\">\n          <a class=\"text-brand text-underline\" href=\"http://my1liferoadmap.1lifefullylived.org/wp-content/uploads/2016/07/Tims1997Dream.pdf\">See Tim's Vision</a>\n        </p>           \n      "
-      },
-      3: {
-        title: 'Tool #2: 1 Year Plan',
-        type: 'tool',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #2: 1 Year Plan</h1>\n              <h2 class=\"h3 module__article__title\">What Will You Accomplish THIS YEAR?!</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\"Setting S.MA.R.T. goals is the first step in turning the invisible into the visible.\"</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Og Mandino\">Og Mandino</cite></footer>\n            </blockquote>\n\n            <p class=\"module__article__text serif-stack\">\n            The most effective plan to achieve your goals includes concrete dates, guidelines and strategies.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            When you are clear with your intention and identify the action steps necessary to accomplish your goals -  you set yourself up for success.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Dates are like targets, because dates give you something to aim for and strive to reach. Action steps are like the ammo for your rocket - you need to launch a few rockets at the target before you can expect to hit it!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            As you take consistent action and keep the faith, you will hit the target. Sometimes you or the target will need to adjust, and that is okay. You will learn what you need to do as you practice.\n            </p>\n            <p class=\"module__article__text serif-stack\">            \n            Life is a big practice. You are always learning and evolving - embrace it! \n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">You CAN Do Anything!  Everything IS Possible.</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            You have everything you need to  be successful!  It may not feel like it sometimes, but you CAN make anything happen! You are perfect exactly the way you are!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Your future vision belongs to you.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Remember your deepest WHYs from Module 2.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Review your Top 3 Rocks.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Remind yourself WHY you want to create your amazing vision, and that no matter what - you deserve to make it happen. You are so worthy.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            You are a special person with so much to give to this world! You wouldn't be taking this class if it wasn't true. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n             Answer the questions on page 7 of your workbook to reconnect with your purpose and propel you forward.\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 3: S.M.A.R.T. Goals</h2>\n            </hgroup> \n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/Vgb15nBDNBg\"\n                width=\"100%\"\n              />\n            </div>\n             \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Create Your S.M.A.R.T. Goals</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            It is time to create your own S.M.A.R.T. Goals!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            You may wish to circle back to the top 3 rocks you identified in Module 2 or use your 1 year goals from the last lesson. Either way, create your own S.M.A.R.T. goals for each of the 3!   (We suggest you stick with 3 goals for now - too many goals can create confusion and make things harder than they need to be.)\n            </p>\n            <p class=\"module__article__text serif-stack\">            \n            Important note: Not only will this exercise give you clarity and accountability, but it will also train your brain to seek out ways to achieve these goals because of your deliberate focus and direction. It is literally like punching an address into a GPS and following the directions. You still need to get up and travel the distance but you will have a clear guide where to go.\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h3 class=\"h4 module__article__title\">SMART GOALS:</h3>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            <strong>Specific</strong> - answers who, what, where, when, which. why\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Measureable</strong> \u2013 needs to be a finish line, how will you know you made it?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Attainable</strong> \u2013 willing and able to accomplish the goal\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Relevant</strong> \u2013 connects back to your why\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Timely</strong> \u2013 anchor goal with an \u201Caccomplish by date\u201D\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            READY?!  Now follow the prompts in the chart on page 9 and 10 in your workbook and create your SMART goals!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h3 class=\"h4 module__article__title\">D (Decide)</h3>\n              <h4 class=\"h5 module__article__title\">Print and Post Your Goals NOW</h4>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Celebrate!\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            You've just accomplished what 90% of the world will never do - create written goals for their future.  Just the act of writing your goals gives them wings!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Post your goals all around your environment so you are constantly exposed to them right NOW! \n            </p>\n            <p class=\"module__article__text serif-stack\">\n             Stick them next to your WHY - on your fridge, your bathroom mirror or beside your bed. Constantly seeing your target keeps your focus exactly where it needs to be to hit the target!\n            </p>\n          </article>\n        </div>\n        "
-      },
-      4: {
-        title: 'Tool #3: Putting It All Together',
-        type: 'tool',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #3: Putting It All Together</h1>\n              <h2 class=\"h3 module__article__title\">Actions and Habits</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\"We are what we repeatedly do.\n              Excellence, then, is not an act but a habit.\"</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Aristotle\">Aristotle</cite></footer>\n            </blockquote>\n\n            <p class=\"module__article__text serif-stack\">\n            The choices you make everyday can lead you to success or hold you back. To set yourself up for success, do the right things daily, and you'll  move  forward toward your chosen destination.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            It's kind of like eating an elephant! You start with one small bite. It's the same for reaching your 1Life Fully Lived. You must take small daily steps, actions and habits to reach your desired destination.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Success is made up of a lot of repetition, and consistent steps taken daily, weekly and monthly.  It may not sound like much, but every little step adds up. The wrong habit done consistently can lead you down a very opposite path then the one you envisioned.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            It's time to establish some positive actions and habits!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">Check-in!</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            Whew! You've done a ton of work up until this point.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Take a moment to consider all you've accomplished since you started in Module 1.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            How are you doing? What is coming up for you?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Fill in the chart on page 12 of your workbook to reflect on the actions you've taken this far and what you've learned through the process.\n            </p>\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Breaking Goals Down into Actions and Habits</h2>\n            </hgroup>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/Vgb15nBDNBg\"\n                width=\"100%\"\n              />\n            </div>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Creating Habits</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            To move your life forward in a positive direction, get clear on the daily actions  and  habits you need to start doing, (and those you need to STOP doing)!  When your days are purpose-driven and effective, you'll create massive momentum in your life to propel you down the ROAD.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Download the Habit Sheet below and choose the necessary habits you need to incorporate into your life. You may also choose to download the exact sheet used in the video by downloading the Legendary Life Planner found in My 1Life Roadmap Facebook group.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Circle back to the video and follow along if necessary while you create your own list!\n            </p>\n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=1k8Kvi6t5CZXSuiU_DkzrnWRF_vw2_DXQ\">See the habits sheet</a>\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3 module__article__title\">Do Something Right NOW!</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack\">\n            Do something today!  NOW!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            It can be sending an e-mail, making a call or something even bigger. Just do something!!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Write it down in your workbook on page 15 and share this commitment in our Facebook group, and/or with your accountability buddy!\n            </p>\n          </article>\n          <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        </div>\n      "
-      },
-      5: {
-        title: 'My Plan4Me Wrap up',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">My Plan4Me Wrap up</h1>\n              <h2 class=\"h3 module__article__title\">WRAP UP</h2>\n            </hgroup>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/Ui7CfVUGOx0\"\n                width=\"100%\"\n              />\n            </div>\n          </article>\n        </div>\n        "
-      },
-      6: {
-        title: 'Next Time…',
-        type: 'lesson',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Next Time\u2026</h1>\n            </hgroup>\n\n            <h3>Next Time...</h3>\n            <p class=\"module__article__text serif-stack\">\n            Financial Offense is the focus of the next Module!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Countless celebrities make and squander millions, only to spend their \u201Cgolden years\u201D broken and penniless. Fortunately there are many more people who have learned to turn an \u201Caverage\u201D salary into lasting wealth simply by setting income goals, managing their expenses and investing wisely.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            So, how do you develop wealth? It really comes down to two simple things:\n            </p>\n\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n            1. Spend LESS than you EARN.\n            </p>\n            <p class=\"module__article__text serif-stack font-weight-bold mb-4\">\n            2. Pay Yourself FIRST, (10% or more), to save for your future.\n            </p>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            It really is that easy. Think of it as prioritizing rather than missing out. After all, by saving and creating a wealthy mindset you will ultimately be missing out on a whole lot of debt! And there is nothing more depressing than to be overwhelmed with debt.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            If you want to have choices in your life, you need a clear financial plan that will give you the power to make decisions based on wants, not needs.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Just like planning your life, your financial planning begins with assessing where you are now.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            In Financial Offense, you'll gain a better understanding of your relationship with money, understand exactly where you are financially right now, and explore ways to increase your income so you'ree better prepared to fund your journey!\n            </p>\n          </article>\n\n          <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        "
-      }
-    }
-  },
-  'financial-offense': {
-    id: 4,
-    title: 'Module 4: Financial Offense',
-    content: "<section class=\"row mb-3\">\n        <div class=\"col-12\">\n          <article class=\"module__article\">\n            <h1 class=\"h3 module__article__title\">Module 4: Financial Offense</h1>\n            <p class=\"module__article__text serif-stack\">\n              Countless celebrities make and squander millions, only to spend their \u201Cgolden years\u201D broken and penniless.  Fortunately there are many more people who have learned to turn an \u201Caverage\u201D salary into lasting wealth simply by setting income goals, managing their expenses and investing wisely.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            So, how do you develop wealth? It really comes down to two simple things:\n            </p>\n\n            <p class=\"module__article__text serif-stack font-weight-bold\">\n            1. Spend LESS than you EARN.\n            </p>\n            <p class=\"module__article__text serif-stack font-weight-bold mb-4\">\n            2. Pay Yourself FIRST, (10% or more), to save for your future.\n            </p>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            It really is that easy. Think of it as prioritizing rather than missing out. After all, by saving and creating a wealthy mindset you will ultimately be missing out on a whole lot of debt! And there is nothing more depressing than to be overwhelmed with debt.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            If you want to have choices in your life, you need a clear financial plan that will give you the power to make decisions based on wants, not needs.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            It all begins with assessing where you are now and planning where you need to go.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Financial Offense is the focus of this Module.  You will have a better understanding of your relationship with money, a clear picture of exactly where you are financially, and you will explore ways to increase your income so you are better prepared to fund your journey!\n            </p>\n          </article>\n        </div>\n      </section>",
-    nextModule: 'financial-defense',
-    lessons: {
-      1: {
-        title: 'Welcome to Finances!',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Welcome to Finances!</h1>\n              <h2 class=\"h3 module__article__title\">Financial Focus</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            Welcome to the financial focal part of the course!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            The next two modules will walk you through the basics of managing your personal finances so you CAN fund your magnificent 1Life!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Personal finance is often the area that causes the most stress and anxiety for the majority of people - so if you are in this boat -you're in good company, and we've designed this information just for you!  If you have a pretty good handle on your finances already, congratulations!  Just keep an open mind during these two modules - you never know what might just fall in!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Either way, remember that, as with everything in life, changing your financial situation takes time.  Be patient with the process. Commit to the consistency throughout the process and pay close attention to the insights you discover in this class.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            When APPLIED, this information has the potential to help you create true financial freedom!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n              <em>Disclaimer: we are not Financial Planning Professionals. We offer content, suggestions, insights and practical tools to enhance your knowledge about your own finances. We are not responsible for any outcomes that may arise from taking action with your finances and do not recommend anything specific for you. If you have questions, concerns or anything else concerning money management,  consult a professional.</em>\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            <em>What we DO advocate is being accountable for your financial situation.  You have the power to create wealth as you define it!</em>\n            </p>\n\n            <section class=\"container\">\n              <h3 class=\"h5 module__article__title\">Kickstart Video with Jenna <i>\"Seuss\"</i> Bayne</h3>\n            </section>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/4poL4LRRlVg\"\n                width=\"100%\"\n              />\n            </div>\n            <h4 class=\"h5 module__article__title\">Module 4 Is At Your Door</h4>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Get ready to take control of your finances by becoming financially literate and confident.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Download your workbook now and let's dig in.\n            </p>\n          </article>\n          <p class=\"lead font-weight-bold\">\n            <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=0B_Skb-DqpicqQmRtMFd6SDlnRlk\">See Module 4 Workbook</a>\n          </p>\n        </div>\n        "
-      },
-      2: {
-        title: 'Welcome to Finances!',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Welcome to Finances!</h1>\n              <h2 class=\"h3 module__article__title\">Financial Focus</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\n              \u201CI am open and ready to attract abundance in my life.\u201D</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Epicurus\">Epicurus</cite></footer>\n            </blockquote>\n            <p class=\"module__article__text serif-stack\">\n            You are in a relationship with money,  just like you are in a relationship with everything in your life. You hold particular beliefs, behaviors and habits that either foster a positive, solid and healthy relationship or a less-than-optimal attachment with money.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            It's important to note there are no perfect relationships! This is what makes life so exciting, and this is true about your financial connection as well. Variance allows for growth because it identifies what you really want and what you are continuing to aim for.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            This lesson will help you develop an understanding of how you relate to money.  Next, you'll learn ideas to make and keep more money,  and then how to invest it and use it in ways that will enhance your life, and others, too!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            So, let's get started!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">Step 1: My Financial Starting Point</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack mb-4\">\n            The Five Levels of Financial Freedom can help orient you on the path to freedom. Read the following statements.  Reflect on where you are now on this scale and note your thoughts in your workbook on page 3.\n            </p>\n\n            <h4 class=\"module__article__title\">The Five Levels of Financial Freedom</h4>\n\n            <p class=\"module__article__text serif-stack\">\n            <strong>Level 1: Financial Rookie:</strong> No real financial knowledge; just starting out on your financial path with no clear idea where you stand or what to do financially to maximize your income and start saving. Or, you have been going a while but find yourself starting to accumulate debt.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Level 2: Financial Apprentice:</strong> Starting to make some money, but have little or no retirement, no savings and not very savvy about investing. You may be strapped with debt and in a big hole you need to dig out of.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Level 3: Financial Journeyman:</strong> Have a solid retirement in place, extra money coming in, basic investing knowledge; not sure how to take advantage of where you are and need a long-term plan.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Level 4: Financial Star:</strong> Have some passive investments, maybe own your own business, strong retirement in place; have not reached critical mass; good plan in place for your future retirement.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <strong>Level 4: Financial Superstar:</strong> Have reached critical mass (passive income is well more than monthly expenses) and choose to work if you wish. All \u201Cwork\u201D and investments now are for fun and pleasure only. \u2018Your financial ship has come in\u201D\n            </p>\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">Step 2: Relationship with Money Quiz</h2>\n            </hgroup>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Find out what your relationship with money is like by taking this short, insightful quiz. Using your results from this quiz, answer the questions on page 4 of your workbook. \n            </p>\n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"https://www.moneyharmony.com/moneyharmony-quiz\">Take the Quiz</a>\n            </p>\n\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 2: MONEY BLOCKS</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            Financial Mindset Coach, Tonya Rineer, discusses the 3 most common \"money blocks\" people experience, and tangible actions steps on how to break free from them. Take notes on page 5 of your workbook. \n            </p>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/ZwRik2IxTDg\"\n                width=\"100%\"\n              />\n            </div>\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Honest Truth Time - What Are Your Money Stories?</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Your beliefs about money may be empowering or limiting.  If you have a healthy relationship with money, that's fantastic!  Consider sharing what you have learned with others - since most people have money blocks.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Money blocks <em>prevent you from moving forward and achieving your financial goals.</em>\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            In the video, Tonya identified 3 common money blocks. Do any of them resonate with you?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Now, you're going to identify your money stories.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            If they are preventing you from getting where you really want to go, it's worth taking the time to connect with them so you can begin to re-write them so they support you on your journey.  This is completely possible once you know what they are!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Your relationship with money requires the same commitment and heartfelt attention you dedicated to creating and planning your dream life.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Take a few deep breaths, relax and think about your responses to the questions below. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            As you do, tune into your body.  What do you feel physically?   What comes up for you mentally, emotionally and spiritually?  Do you feel tightness? Anxiety? Fear?  Be open and don't judge any of your responses.  Just note them.  Accept them.  They exist to protect you.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            What do you believe to be true about money?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Is money hard to come by or does it flow to you easily and effortlessly? \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Are you an ever abundant source of prosperity? \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Are you an ever abundant source of prosperity?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Is money a source of pleasure or of pain?\n            </p>\n            <p class=\"module__article__text serif-stack\">            \n            Do you have to be unkind to be rich?\n            </p>\n            <p class=\"module__article__text serif-stack\">            \n            Think of all the beliefs, sayings and examples you hold concerning money. What is your money story?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Write it down on page 6 in workbook.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <em><strong>However you choose to do this activity, please, do yourself a favor and don't skip this!  If you are resistant - explore why that may be...  Resistance is always a sign that you are heading in the right direction! </strong></em>\n            </p>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3 module__article__title\">Financial Objectives</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            The Financial Objective Chart on page 7 in your workbook can help you elevate the money story you just empowered yourself with. Read through the list. This is the freedom money offers you.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Money allows you to show up in the world as the superstar you are, and serve the world in the way you are meant to. You deserve all that is here.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            As you read through the list, choose what is important to you right now.  Decide what is important for your future.   Add at least two other financial objectives you have now, or in the future. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n              <em>\n            If you have a spouse or partner in any capacity (roommate, business partner, etc) this is a great exercise to do with them so you can each learn what is important to you both.  \n              </em>\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            <em>\n            You may want to check in with someone on your personal board of directors to work through your thought process and make sure you're seeing the whole picture.\n            </em>\n            </p>\n          </article>\n        </div>\n        "
-      },
-      3: {
-        title: 'Tool #2: Welcome to Finances!',
-        type: 'tool',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #2: My Financial ABCs</h1>\n              <h2 class=\"h3 module__article__title\">Where Are You NOW, Financially?</h2>\n            </hgroup>\n  \n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\n              \u201COne of the most critical steps in the pursuit of your dreams is having your financial house in order.\u201D</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n            </blockquote>\n            <p class=\"module__article__text serif-stack\">\n            Expenses, liabilities, assets, investing, taxes, budgeting, income, net worth - so many things fall under the topic of money! It's easy to be overwhelmed, stressed and anxious,  as well as excited, hopeful and inventive when it comes to finances.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Your personal finances may feel daunting and overwhelming, or you may be thinking, \"I already know this stuff!\"  Or somewhere in between.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            No matter where you are in terms of your financial knowledge, take a deep breath and be excited about all the things money can do for you, and allow you to do for others. Mastering the financial basics will change your financial trajectory in the most positive way. Give it all you have and be open to asking questions, absorbing all you can and utilizing the nuggets of wisdom you'll learn. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            No matter where you are in terms of your financial knowledge, take a deep breath and be excited about all the things money can do for you, and allow you to do for others. Mastering the financial basics will change your financial trajectory in the most positive way. Give it all you have and be open to asking questions, absorbing all you can and utilizing the nuggets of wisdom you'll learn.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            So, pay attention!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">Mastering Your Finances</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Finance is the business of your life. Treat it that way.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Begin by reading the statements in your workbook on page 8.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Without judgement, carefully consider your level of understanding of each of the financial statements. Make personal notes of things you do not understand, the parts you want to make sure you remember and any other notes that come up for you as you read them.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Remember, if this feels overwhelming, complicated or boring commit to completing the exercise to the best of your ability.\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 3: My Financial ABCs</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            Financial Expert, Tyler McBroom, discusses the importance of knowing your financial ABC's.\n            </p>\n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/duohUY9541U\"\n                width=\"100%\"\n              />\n            </div>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Step 1. Video 4: 1Life Balance Sheet</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Okay, so you're ready to master your financial game, right?  Watch the video, then download your balance sheet below. \n            </p>\n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/E24cCsZEAyQ\"\n                width=\"100%\"\n              />\n            </div>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Step 2. Complete My 1Life Balance Sheet</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            To win the money game, it's critical to keep track of what comes in and what goes out.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Most people play this part poorly.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Do you know why only 5% of people in America hold 95% of its wealth?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The answer might surprise you, but the key is: Live within your means!  It's really is as simple as that.\n            </p>\n            \n            <h4 class=\"h5 module__article__title\">Completing Your 1Life Financial Balance Sheet - Written Guidelines</h4>\n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=17e6t-ZG6FS4b6uK15_sAwBBMySPmTWG9\">1Life Balance Sheet(xls)</a>\n            </p>\n            <p class=\"module__article__text serif-stack\">\n              1. Record all your <em><strong>Assets</strong></em> \u2013 things you own. There are several categories to think about including <em>Personal Property</em>, <em>Real Estate</em>, <em>Taxable Assets</em>, and <em>Retirement Accounts</em>.  Use their current value for this inventory.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            2. List your <em><strong>Liabilities</strong></em> \u2013 things you owe. These are usually loans and credit cards.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n              <em><strong>3. Calculate your Net Worth by subtracting your Liabilities from your Assets.</strong></em>\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The balance sheet serves as a financial \"snap shot\" to help you understand exactly where you are financially at any given point. Many people adjust and review their balance sheet monthly, so they can continue to correct their course as needed and stay on track.  \n            </p>\n            <p class=\"module__article__text serif-stack\">\n              <em>Remember, the more accurate your numbers are, the better this activity will serve you, so dig out those statements and invoices, and use ACCURATE numbers!  (You know what they say about \"garbage in - garbage out\"!</em>\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3 module__article__title\">Plan for Your Future!</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            Consider what big-ticket items you may have coming up, how much they'll cost and when you plan to make the purchase.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            This is your future wish-list. These are all the foreseeable expenses that you anticipate and want to plan for down the line. \n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n              <ul>\n                <li>Weddings</li>\n                <li>College</li>\n                <li>Down payment on home</li>\n                <li>New (or used!) car</li>\n                <li>Transmission</li>\n                <li>Engagement ring</li>\n              </ul>\n            </p>\n\n            <p class=\"module__article__text serif-stack\">\n            Fill in the savings chart on page 16 of your workbook now. \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Helpful hint: Identifying these things allows you to plan for the future and set aside money each month now to make these things happen without using loans or credit cards. <strong>Never</strong> use credit until you consider how it will affect your financial plan <strong>AND</strong> write out how you will pay it off as soon as possible.\n            </p>\n        "
-      },
-      4: {
-        title: 'Tool #3: Maximizing My Income',
-        type: 'tool',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #3: Maximizing My Income</h1>\n              <h2 class=\"h3 module__article__title\">Handling the 'C'</h2>\n            </hgroup>\n  \n            <p class=\"module__article__text serif-stack\">\n            As you now know, the equation A - B = C is critical in your financial game plan.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The goal is to have 'C' be positive rather than negative. This happens when you maximize your A (earnings) and minimize your  B (expenses).\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            This is exactly what offense is all about, increasing the A.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            There are many creative ways to increase the money flow coming in. However, it depends on what you are willing to do. This may require extra hours, creativity and dedication. You may have to give up watching the game with your buddies some nights of the week or change a few other parts of your routine.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Then think about how you could increase your Financial Offense using the skills, talents and abilities you already possess.  \n            </p>\n            <p class=\"module__article__text serif-stack\">\n            The sky is the limit!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">Last Year's Financial Overview</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Considering your financial journey last year, complete the chart on page 14 in your workbook.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Take time with this to review where you succeeded and areas you feel you would like to improve. Recapping on your past helps us to understand and grow from where we are to where we want to go. Be honest and dig deep! \n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 5: Increasing Income Strategies</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            1Life Founder, Tim Rhode, shares some valuable insight on Financial Offense!\n            </p>\n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/zgaQyp-mwag\"\n                width=\"100%\"\n              />\n            </div>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Video 6: Creating My Income Statement</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack\">\n            Financial Expert, Tyler McBroom, explains how to complete your Income Statement.\n            </p>            \n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/oOYkpDueFfI\"\n                width=\"100%\"\n              />\n            </div>\n            \n            <p class=\"module__article__text serif-stack\">\n            Download My 1Life Financial Income Statement below, and spend time calculating your monthly and annual income. \n            </p>\n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=1j9cSGwm_0SvxcC4HhzRJcQExJRbjWoKa\">My 1Life Financial Income Statement</a>\n            </p>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3 module__article__title\">Earn More Today!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">            \n            What specific actions can you take NOW to earn more?  Sometimes we need to dig deep and find side work to make extra cash.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n              <ul class=\"serif-stack\">\n                <li>Take an extra job</li>\n                <li>Start a 2nd business</li>\n                <li>Work overtime</li>\n                <li>Take classes to get the next certificate</li>\n                <li>Go back to school to start a new career</li>\n                <li>Could you shovel snow, cut and sell firewood, do odd jobs, walk someone\u2019s dog, house sit? Ever consider bartering\u2014trade yard work for dental work, tutor for food, maintain and clean apartments in exchange for rent?</li>\n              </ul>\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            This is playing offense full out. Take time to enjoy life, but make sure you have all your players on the court and are pushing the ball hard to make your maximum financial score.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Note: When you get that extra income, or a raise, or realize a return on an investment, don\u2019t increase your expenses! This is hard to do. There are spenders everywhere with daily lattes, new cars, and great vacations. <em><strong>Many also have maxed out credit cards and have no savings and no retirement.</strong></em>\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Think of at least 3 things you could NOW!  Write them down on page 18 in your workbook!\n            </p>\n          </article>\n        "
-      },
-      5: {
-        title: 'Financial Offense: Wrap up',
-        type: 'lesson',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">FINANCIAL OFFENSE: Wrap up!</h1>\n            </hgroup>\n\n            <h3 class=\"h2 module__article__title\">WRAP IT UP!</h3>\n            <p class=\"module__article__text serif-stack\">\n            Do you feel you have a good understanding about what financial offense is all about?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            It's about increasing your income using the skills, talents and opportunities that are already available to you!\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            What are three key takeaways that you've discovered or have been reminded off during this lesson?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            There is space on page 20 for you to write them down under the weekly challenge section.\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            What are you looking forward to when it comes your financial game?\n            </p>\n            <p class=\"module__article__text serif-stack\">\n            Next up we are looking into financial deeeeeefeenccee! Defense wins championships!\n            </p>\n          </article>\n\n          <div class=\"player-wrapper mb-4\">\n            <ReactPlayer\n              url=\"https://youtu.be/rNngtO4_KkY\"\n              width=\"100%\"\n            />\n          </div>\n\n            <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        "
-      },
-      6: {
-        title: 'Next Time…',
-        type: 'lesson',
-        content: "\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Next Time\u2026</h1>\n              <h2 class=\"h3 module__article__title\">Module 5: Financial Defense!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Financial Defense is all about growing your money; investing wisely, and protecting your principal to build real, lasting wealth over time. In this module, you will develop a clear understanding of how to effectively budget and invest, and understand how to best live within your means so you can maximize your financial future!  Whoo Hoo!\n            </p>\n          </article>\n        "
-      }
-    }
-  },
-  'financial-defense': {
-    id: 5,
-    title: 'Module 5: Financial Defense!',
-    content: "<section class=\"row mb-3\">\n        <div class=\"col-12\">\n          <article class=\"module__article\">\n            <h1 class=\"h3 module__article__title\">Module 5: Financial Defense!</h1>\n            <p class=\"module__article__text serif-stack\">\n            Financial Defense is all about growing your money; investing wisely, and protecting your principal to build real, lasting wealth over time. In this module, you\u2019ll develop a clear understanding of how to effectively budget and invest, and understand how to best live within your means so you can maximize your financial future.\n            </p>\n          </article>\n        </div>\n      </section>",
-    nextModule: 'fit-for-my-future',
-    lessons: {
-      1: {
-        title: 'Introduction: Financial Defense',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Module 5: Financial Defense</h1>\n              <h2 class=\"h3 module__article__title\">MODULE 5: FINANCIAL DEFENSE</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            Either way, remember that, as with everything in life, changing your financial situation takes time.  Be patient with the process. Commit to the consistency throughout the process and pay close attention to the insights you discover in this class.\n            </p>\n          </article>\n          <section class=\"container\">\n            <h3 class=\"h5 module__article__title\">Kickstart Video with Jenna <i>\"Seuss\"</i> Bayne</h3>\n          </section>\n          <div class=\"player-wrapper mb-4\">\n            <ReactPlayer\n              url=\"https://youtu.be/_eb69fLfKl4\"\n              width=\"100%\"\n            />\n          </div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h4 class=\"h5 module__article__title\">Module 5 will help your finances thrive!</h4>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            Download the workbook and get ready to walk away with tangible tools to fund your future.\n            </p>\n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=0B_Skb-Dqpicqb0FSb2RjYVZLanc\">See Module 5 Workbook</a>\n            </p>\n          </article>\n          <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        </div>\n        "
-      },
-      2: {
-        title: 'Tool #1: Creating a Budget!',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #1: Creating a Budget!</h1>\n              <h2 class=\"h3 module__article__title\">Defensive Strategies</h2>\n            </hgroup>\n\n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\"Financial independence is your ability to live from your own personal resources.\"</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Jim Rohn\">Jim Rohn</cite></footer>\n            </blockquote>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            Financial Defense is all about growing your money, investing wisely, and protecting your principal to build real, lasting wealth over time.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            In this module, you'll develop a clear understanding of how to effectively budget and begin investing, and understand how to best live within your means so you can maximize your financial future.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            You'll focus on what we call  Financial  Defense, which means becoming competent, and consciously aware of your current financial position.  This is the most critical step to maximizing your future wealth.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            To successfully play the money game, it's imperative that you keep track of what comes in and what goes out. Most people play this part poorly.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Often, the only difference between being poor and being rich is as simple as this:  <strong>Live within your means!</strong>\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">So, let's get started!</p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            <em>\n            If you are planning your future with a spouse or significant other, you should complete this section together.  Many arguments, and ultimately divorces, have their roots in financial differences\n            </em>\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">Video 2: Living Below Your Means</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack mb-4\">\n            The fastest way to accumulate money is to spend less than you earn.  Choose to live a modest lifestyle, be clear on your goals, budget and watch your spending habits. If and when you do start earning more money - save more - don't just spend it!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Watch the video below as Tim describes how to effectively live below your means. Fill in the chart on page 3 of your workbook.\n            </p>\n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/VNf4olOeV2o\"\n                width=\"100%\"\n              />\n            </div>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 3: Introduction to Budgeting</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            Financial Expert, Tyler McBroom, shares the ins and outs of how to create an effective budget.\n            </p>\n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/ocroe8jr06E\"\n                width=\"100%\"\n              />\n            </div>\n                        \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Complete Your Zero-Based Budget!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            The concept of a zero-based budget is simple - add up all your income then subtract all your expenses and it should equal zero.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n             If you earn $3,000 a month, you want every dollar that you spend/save/give/invest to equal $3,000. That way, you know where every one of your dollars is going.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Not knowing where your money goes is what kills a lot of peoples' money situations. They just look up one day, and they have no money\u2014and no clue about where it went.\n            </p>\n            <p class=\"lead font-weight-bold module__article__text serif-stack mb-4\">\n            Download and Complete the Budget Worksheet, or create your own.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            1.  Identify all your income.  This includes paychecks, small-business income, side jobs, residual income, child support and so on. If it\u2019s money that comes into your household\u2019s bank account, write it down and tally it up.\n            </p>\n            <p class=\"lead font-weight-bold module__article__text serif-stack mb-4\">            \n            2. ADD A LINE ITEM UNDER EXPENSES FOR YOUR SAVINGS.  THIS SHOULD BE A FIXED EXPENSE.  The first \"bill\" you pay every single month.  \n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            3. Write down every single expense you have each month:  rent or mortgage, food, cable, phones, and everything in between.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            3.  Create \"extra\" categories for quarterly, bi-annual or annual expenses that you contribute a portion to monthly.  This can include taxes, travel, gifts, etc.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            4.  Once you have the income and outgo listed, don\u2019t be shocked or worried if they don\u2019t balance each other out.  Simply adjust numbers up and down so that every dollar is accounted for and has a \"job\" assigned to it.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            If you spend more than you make, then you need to make some cuts in order to make your income and outgo equal. To reduce expenses, try clipping coupons or catching a carpool to work. If you want to generate more money, get a second job or consider if there are things you can sell.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            5.  Don\u2019t spend anything that\u2019s not on that paper!! If you budget $100 for eating out and you\u2019re already at $95.  Buy an apple or some pretzels, and call it good!  Or put the extra $5 into savings. <strong>Don\u2019t spend in violation of your plan.</strong>\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            The final thing to remember is that at first, <strong>you are the boss of the budget</strong>. Once it's made, the budget is the boss of you.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            You don\u2019t need to think of it as a straitjacket; <strong>think of it as a guide.  It is there to serve you.</strong>\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            It will lead you to the treasure, so stick with it.\n            </p>\n\n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=1D9KWHMvf7UPl327R3i5tNkpqQKfdQFw9\">Budget Worksheet</a>\n            </p>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3 module__article__title\">Budget Satisfaction</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            You now have a clear depiction of what you're earning and where you're spending.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Take time looking for areas you can adjust, improve and/or eliminate to increase your financial wealth.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Answer the questions in your workbook on page 7.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Make a decision to take action to improve or enhance your financial situation and implement it this month, this week, today! \n            </p>\n          </article>\n        </div>\n        "
-      },
-      3: {
-        title: 'Tool #2: Debt Reduction and Investment Basics',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #2: Debt Reduction and Investment Basics</h1>\n              <h2 class=\"h3 module__article__title\">Make an Investment Plan</h2>\n            </hgroup>\n  \n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\"Small daily improvements are the keys\n              to long-term positive results.\"</p>\n              <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n            </blockquote>\n  \n            <p class=\"module__article__text serif-stack mb-4\">\n            Like we have said before, the business of your finances, is a life-long project. Living only for today will get you through today. But, what about all those tomorrows when you want to kick back and wallow in self-indulgence?\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            You must remember: it's not what you make but what you keep and invest for your future that matters. The first 10% of what you make\u2014not the little bit left over after the Super Bowl party, or the date with the girl/boyfriend, or the car repair\u2014should be kept and invested wisely to create your magnificent future. Small choices add up and soon you\u2019ll feel rich, which will help you to create even more momentum to achieve your goals. You can do this!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            If your \"C\" is negative then you will work with debt reduction first. Once your \"C\" is positive you will want to look into investing opportunities! If your \"C\" is already positive then jump right to investing.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            There are many ways to invest your money and make it work for you. Reading and connecting with professionals in this arena is a really great starting place to become fully competent and to make the right decisions. Knowledge applied is power. Find out the best ways you feel comfortable with handling your dollars. \n            </p>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">The Richest Man in Babylon</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            The Richest Man in Babylon is a book composed of various parables. It is a quick read and highly recommended to anyone wanting to Master their finances. Read it as you go through this lesson or prior too. If you do not have the book, you may do a quick search for a PDF summary to get the gist. Reading the book is preferred because of the enlightening and relatable stories. Once you are familiar with this resource and have spent time learning the valuable insights revealed in the chapters, answer the questions on page 8 of your workbook. \n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 4:  Debt Reduction and Basic Investing</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack mb-4\">\n            Financial Expert, Tyler McBroom, guides you through debt reduction and basic investing principles.\n            </p>\n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/LW_eW_nbkU8\"\n                width=\"100%\"\n              />\n            </div>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (act)</h1>\n              <h2 class=\"h3 module__article__title\">Reduce Your Debt</h2>\n            </hgroup>\n \n            <p class=\"module__article__text serif-stack mb-4\">            \n            First, if debt is stressing you out, breathe.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">            \n            Just as you build a brick house one brick at a time, you'll tackle your debt one dollar at a time.  If you're consistent, you'll quickly see progress, and will feel better about being in control of your finances within 30-60 days!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Download and complete the worksheet below to systematically reduce and eliminate debt following the \" Debt Snowballing Method\".\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Debt Reduction Worksheet\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">            \n            1.  List your debts in terms of smallest to largest \"payoff\".  For now, don't be too concerned with the interest rate, unless you have two debts the same. In that event, list the one with the highest interest rate first.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            2.  List the minimum monthly payments for each.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            3. Add an additional amount to the smallest debt so you can pay it off and set yourself up with a win!   Continue making the minimum payments on the rest of your debts - and put AS MUCH AS YOU CAN toward your smallest debt.  \n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            4. Once you've paid the first debt, take the full amount you were paying on that debt, and add it to the minimum amount on the second debt.  \n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            5.  Repeat the cycle until all your debt is eliminated!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            6.  Now take the full amount you were paying on your last debt - and put it into savings and begin to INVEST it!  Don't accrue more debt!\n            </p>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (decide)</h1>\n              <h2 class=\"h3 module__article__title\">Video 6: Investing Wisdom</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            1Life Founder, Tim Rhode, gives you some valuable investing tips that he applied in his own life.\n            </p>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/MIONVI8BDJw\"\n                width=\"100%\"\n              />\n            </div>\n\n            <p class=\"font-weight-bold module__article__text serif-stack mb-4\">\n            Tim mentions risk tolerance in the video.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            What is Your Risk Tolerance for Investing?  Take this quiz and find out!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Then, reflect in your journal what the results of this quiz reveal!\n            </p>\n            \n            <p class=\"lead font-weight-bold\">\n              <a class=\"text-brand text-underline\" href=\"http://my1liferoadmap.1lifefullylived.org/wp-content/uploads/2016/09/Risk_Tolerance_Quiz.pdf\">Risk Tolerance Quiz</a>\n            </p>\n            \n            <h2 class=\"h3 module__article__title\">\n            Additional Resources to Support Your Financial Literacy\n            </h2>\n\n            <strong>BOOKS</strong>\n            <p class=\"module__article__text serif-stack mb-4\">            \n            1. Richest Man in Babylon, George S. Clason\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">            \n            2. The Four Laws of Debt Free Prosperity, Blaine Harries and Charles Coonradt\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            3. Think and Grow Rich, Napoleon Hill\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            4. Stop Acting Rich, and Start Living Like a Real Millionaire, Thomas J Stanley PHD\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            5. The Total Money Makeover, Dave Ramsey\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">            \n            Rule 1 Inventing, Phil Town\n            </p>\n\n            <strong>WEBSITES</strong>\n            \n            <ul>\n              <li><a href=\"http://mint.com\">Mint.com</a></li>\n              <li><a href=\"http://updown.com\">Updown.com</a></li>\n              <li><a href=\"http://expenser.com\">Expenser.com</a></li>\n              <li><a href=\"http://kiplinger.com\">Kiplinger.com</a></li>\n          </article>\n        </div>\n        "
-      },
-      4: {
-        title: 'Tool #3: Sprint and Marathon Plan',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Tool #3: Sprint and Marathon Plan</h1>\n              <h2 class=\"h3 module__article__title\">My 1Life Financial Plan</h2>\n            </hgroup>\n    \n            <blockquote class=\"blockquote serif-stack\">\n              <p class=\"serif-stack font-weight-bold\">\"Most people don't plan to fail.\n              They fail to plan\"</p>\n              <footer class=\"blockquote-footer\"><cite title=\"John L. Beckley\">John L. Beckley</cite></footer>\n            </blockquote>\n    \n            <p class=\"module__article__text serif-stack mb-4\">\n            You're gaining control of your finances! Woohoo!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            And, as you apply what you've learned so far, you can expect constant evolution, growth and challenges.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            As long as you're intentional with your finances, and you tend to your relationship with money, you will stay on track. \n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            In this lesson, you're going to connect your dream and your plan and put it all together!  Everything you've learned so far all comes together now as you learn to make your dreams come true!  \n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Let's DO this!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              <h2 class=\"h3 module__article__title\">Current Financial Satisfaction</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack mb-4\">\n            Think of everything you have done up until this point. You've done a marvelous job!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Review your workbooks and all the things you've learned up to this point, paying close attention to your financial observations.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Moving forward, what financial habits do you want to implement into your daily, weekly or monthly routine? Record three financial habits you're committed to doing in your workbook on page 12!\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n              <h2 class=\"h3 module__article__title\">Video 7: Creating Your Sprint and Marathon Plans</h2>\n            </hgroup>\n            \n            <p class=\"module__article__text serif-stack mb-4\">\n            Take notes on page 13 of your workbook as Financial Expert, Tyler McBroom, takes you through the importance and creation of both your sprint (short-term) plan and your marathon (long-term) plan for your finances.\n            </p>\n            \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/ca0F5EtD5Iw\"\n                width=\"100%\"\n              />\n            </div>\n            \n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">A (Act)</h1>\n              <h2 class=\"h3 module__article__title\">Create Your Sprint and Marathon Plans!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            Now that you know what your income and expenses are, and you've identified your financial goals, it's time to make a plan to set aside money each month now to make these happen without using loans or credit cards.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">            \n            Never use credit until you consider how it will affect your financial plan AND write out how you will pay it off as soon as possible.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Download and complete each financial plan, or use them as a guide for this activity.\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Sprint Plan Worksheet</h1>\n              <h2 class=\"h3 module__article__title\">Marathon Plan Worksheet</h2>\n            </hgroup>\n            \n            \n            <p class=\"module__article__text serif-stack mb-4\">\n            Being a strategic player in the game of finance sets you up to win!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Draft your short-term and long-term priorities using all the resources you've explored!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            Here are some points to remember:\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            1. This seems like a whole lotta\u2019 information\u2014and it is. Remember, you don\u2019t have to tackle it all at once, and if something doesn\u2019t apply to you then don\u2019t worry about it! But, the key to successful Financial Planning is looking at the entire picture.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            2. Investing is part of the \u201Cbusiness of running your life.\u201D By researching and seeking out successful investors with a successful track record, you can maximize your risk/reward ratio and hopefully beat the odds.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            3. Think long, slow, steady progress. \u201CGet rich quick\u201D is a scam.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            <ul>\n              <li>\n                <p class=\"module__article__text serif-stack mb-4\">\n                Understand all the costs associated with buying, selling and managing your investments.\n                </p>\n                <ul>\n                  <li>\n                    <p class=\"module__article__text serif-stack mb-4\">\n                    Beware of investments that seem too good to be true\u2014they probably are.\n                    </p>  \n                  </li>\n                  <li>\n                    <p class=\"module__article__text serif-stack mb-4\">\n                    Where are you lacking in knowledge?\n                    </p>\n                  </li>\n                  <li>\n                    <p class=\"module__article__text serif-stack mb-4\">\n                    Find good information/resources to help you make informed decisions.\n                    </p>\n                  </li>\n                  <li>\n                    <p class=\"module__article__text serif-stack mb-4\">\n                    4. Always ask yourself what extra things you can do <b>now</b> to make your future better.\n                    </p>\n                  </li>\n                  <li>\n                    <p class=\"module__article__text serif-stack mb-4\">\n                    5. When you get that extra income, or a raise, or realize a return on an investment, don\u2019t increase your expenses! This is hard to do. There are spenders everywhere with daily lattes, new cars, and great vacations. <em>Many also have maxed out credit cards and have no savings and no retirement</em>.\n                    </p>\n                  </li>\n                  <li>\n                    <p class=\"module__article__text serif-stack mb-4\">\n                    <strong><em>6. You must learn to take care of the money you earn. This is what lets you live the life and do the important work that you choose to do. You must learn to set aside time each and every week to manage your finances. This is an ongoing process and critical to your future, and the future of those you love.</em></strong>\n                    </p>\n                  </li>\n                </ul>\n              </li>\n            </p>\n\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n              <h2 class=\"h3 module__article__title\">What Is Your Financial Target?</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack mb-4\">            \n            How do you feel about your plans? Are you excited? Anxious? What are you most looking forward to?\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">            \n            1.  Identify one target goal for both your sprint and marathon financial plan, and do something today to move forward!\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            2.  Record your goals on page 16 of your workbook!\n            </p>\n          </article>\n        </div>\n        "
-      },
-      5: {
-        title: 'Module 5: Wrap up',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Module 5: Wrap up</h1>\n              <h2 class=\"h3 module__article__title\">Congratulations - You're Almost There!</h2>\n            </hgroup>\n                \n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/y8m_cROgkZM\"\n                width=\"100%\"\n              />\n            </div>\n            \n            <hgroup class=\"mb-3\">\n              <h2 class=\"h3 module__article__title\">Watch this great webinar from the 1LIFE VAULT!</h2>\n            </hgroup>\n\n            <p class=\"module__article__text serif-stack\">\n            Byron McBroom is Tyler's dad. Watch this webinar and you'll learn where Tyler's wisdom comes from! This webinar reviews some of what has already been covered in this lesson, and goes into more depth in several other areas of Personal Finance.\n            </p>\n            <p class=\"module__article__text serif-stack mb-4\">\n            If you can NAIL the 4 basics Byron shares, you WILL retire comfortably - and live your 1Life - fully!\n            </p>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/OjZybQMF3uc\"\n                width=\"100%\"\n              />\n            </div>\n\n            <p class=\"module__article__text serif-stack mb-4\">\n            2.  Record your goals on page 16 of your workbook!\n            </p>\n          </article>\n          <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        </div>\n        "
-      },
-      6: {
-        title: 'Next Time…',
-        type: 'lesson',
-        content: "\n        <div>\n          <article class=\"module__article container mb-5\">\n            <hgroup class=\"mb-3\">\n              <h1 class=\"h2 module__article__title\">Next Time\u2026</h1>\n              <h2 class=\"h3 module__article__title\">MODULE 6: Fit for My Future</h2>\n            </hgroup>                \n\n            <p class=\"module__article__text serif-stack\">\n            Life is a marathon, and you need to fuel your body for mental clarity and maximum vitality to fulfill your purpose-driven journey. In the next module, you will learn the latest science on health and wellness so your body, mind, and soul can support you, your journey, and your dreams.\n            </p>\n          </article>\n          <article class=\"module__article container mb-5\">\n            <p class=\"font-weight-bold\">\n              If you have questions about this lesson, write <a href=\"mailto:my1liferoadmap@1lifefullylived.org\">my1liferoadmap@1lifefullylived.org</a>\n            </p>\n          </article>\n        </div>\n        "
-      }
-    }
-  },
-  'fit-for-my-future': {
-    id: 6,
-    title: 'Module 6: Fit For My Future!',
-    content: "<section class=\"row mb-3\">\n        <div class=\"col-12\">\n          <article class=\"module__article\">\n            <h1 class=\"h3 module__article__title\">Module 6: Fit For My Future!</h1>\n            <p class=\"module__article__text serif-stack\">\n            Life is a marathon, and you need to fuel your body for mental clarity and maximum vitality to fulfill your purpose driven journey. In this module, you will learn the latest science on health and wellness so your body, mind, and soul can support you, your journey, and your dreams.\n            </p>\n          </article>\n        </div>\n      </section>",
-    nextModule: null,
-    lessons: {
-      1: {
-        title: 'Fit For My Future!',
-        type: 'lesson',
-        content: "          \n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Fit For My Future!</h1>\n                <h2 class=\"h5 module__article__title\">Module 6: Fit For My Future</h2>\n              </hgroup>\n            </article>\n\n            <section class=\"container\">\n              <h2 class=\"h5 module__article__title\">Kickstart Video with Jenna <i>\"Seuss\"</i> Bayne</h2>\t\t\t\t\t\t\t\t\n            </section>\n\n            <div class=\"player-wrapper mb-4\">\n              <ReactPlayer\n                url=\"https://youtu.be/E8aqWkNxfEs\"\n                width=\"100%\"\n              />\n            </div>\n\n            <article class=\"module__article container\">\n              <h3 class=\"h4 module__article__title\">Last module to go!</h3>\n              <p class=\"module__article__text serif-stack\">\n              This is module 6; the last one in the mix! Download your final workbook below and head on over to the first lesson!\n              </p>\n              <p class=\"lead font-weight-bold\">\n                <a class=\"text-brand text-underline\" href=\"https://drive.google.com/open?id=0B4KpNwL4PokNMXF1dmpRMXM3Tjg\">Module 6 Workbook</a>\n              </p>\n\n              <blockquote class=\"blockquote\">\n                <p class=\"font-weight-bold\">\n                If you have questions about this lesson, contact us at <a href=\"mailto:info@1lifefullylived.org\">info@1lifefullylived.org</a>\n                </p>\n              </blockquote>\n\n            </article>\n          </div>    \n        "
-      },
-      2: {
-        title: 'Tool #1: Fuel for My Future',
-        type: 'tool',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Tool #1: Fuel for My Future</h1>\n                <h2 class=\"h3 module__article__title\">Food is Your Life Force</h2>\n              </hgroup>\n    \n              <blockquote class=\"blockquote serif-stack\">\n                <p class=\"serif-stack font-weight-bold\">\"The greatest wealth is health.\"</p>\n                <footer class=\"blockquote-footer\"><cite title=\"Virgil\">Virgil</cite></footer>\n              </blockquote>\n    \n              <p class=\"module__article__text serif-stack mb-4\">\n              Why do we eat?\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              At the most basic level, we eat to survive. Every life force on this planet needs nourishment to live. Plants need sunlight, water, air and soil. Animals require water, protein, carbs and fats...even our cars need proper fuel to run.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Without proper fuel for an extended amount of time these things will perish. Thus, in order for your vehicle (your body) to make it through this roadmap journey,  you need to give it the highest quality fuel possible!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Think about it, what is it that you expect food to do for you? \n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              If you expect food to provide you with energy, balance and satiety - you're on the right track!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Food is less about exact measurements of calories, grams or ounces and more about how it makes you feel. And everyone is different.  You may require more protein, or carbs, or fats, than others, it depends on your genetics, lifestyle, goals and environment. Embrace your uniqueness and stop seeking advice outside of you to figure out what your body needs. Instead, the knowledge you've learned about health, and combine it with your personal experience to find what YOUR body craves for optimal strength, mental clarity and exuberance!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Essentially, what you eat ultimately determines how your body functions. When the foods you eat are broken down through the digestive process, your internal system is massively affected.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Foods can cause inflammation in the body or stimulate an environment of health and healing. Your energy levels, moods and a wide variety of other functions are dramatically influenced by how you feed and fuel your body.\n              </p>\n              <p class=\"font-weight-bold module__article__text serif-stack mb-5\">\n                Being acutely aware of what you are consuming is the best way to learn how to achieve your greatest health!\n              </p>\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n                <h2 class=\"h3 module__article__title\">Health Symptoms</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Your body is brilliant! It will tell you a lot if you learn how to listen to the messages it sends.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Skin impurities, digestive complaints, aches and pains, and other ailments are all messages your body is using to tell you that you are out of balance. We often ignore these symptoms or get so used to them, we pass them off as \"normal\" and choose to suffer with less than optimal conditions.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Begin this section by identifying any messages your body is sending you about your current state of health and vitality. Rate yourself in the Health Inventory Checklist found on page 3 and 4 of your workbook.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              After you complete the whole list, take note of all the symptoms you may be tolerating without even realizing it. Finish this section by identifying and writing down 3 health concerns, goals or commitments you intend to address on your roadmap journey.\n              </p>\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n                <h2 class=\"h3 module__article__title\">Video 2: Food is Your Fuel</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Flip to page 5 and 6 of your workbook to jot down any notes that come up for you as you watch the video below, and gain a better understanding of the fuel your body needs.\n              </p>\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n                <h2 class=\"h3 module__article__title\">Video 2: Food is Your Fuel</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Flip to page 5 and 6 of your workbook to jot down any notes that come up for you as you watch the video below, and gain a better understanding of the fuel your body needs.\n              </p>\n              <div class=\"player-wrapper mb-4\">\n                <ReactPlayer\n                  url=\"https://youtu.be/s8Vtmg-4XeU\"\n                  width=\"100%\"\n                />\n              </div>\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">A (Act)</h1>\n                <h2 class=\"h3 module__article__title\">Food Journal</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              This exercise may be one of the most game-changing exercises you will ever do for your energy and vitality! It's called a Food Journal!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Record EVERYTHING you consume (food or drink) and the time you consume it for 10 days. Also record how you feel before you consumed something, how you feel while you are eating and how you feel 2 hours after you finish eating it!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Here are the guidelines:\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              1. For the first three days - don't change a thing. Just eat what you normally eat.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              2. Be honest and mindful with this practice. You may be tempted to only record the \"healthy\" foods you consume - but this in't the point! Don't judge what you eat.  Just record it.  You want an honest reflection of your nutrition for 10 days.  If you're eating take-out put it in your journal, if you're at a party, make your food journal a priority, and record it at your earliest convenience. [Hint: This journal may be something you want to print out if you do not have your device with you while you eat.]\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              3.  After 3 days, if you feel inspired to change how you eat, go for it! You may want to focus on adding whole foods (foods you can find in nature), humanely grown meats and organic produce. You may want to reduce or eliminate packaged and processed foods found in the middle of the grocery store, and add more delicious nature food sources found in the outer sections.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Try new recipes at home and record how your body feels! Use different ingredients, spices, herbs and eat different amounts of protein, carbohydrates and fats and listen to the messages from your body.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Have fun with it!  Make it a family challenge or try it with your partner or a friend. You are a scientist, your body is the lab and your food intake is the experiment!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Be open and courageous to try something new.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Things you may choose to try on are as an extended challenge are:\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              1. Eliminating a food group such as dairy, soy, gluten or any category of your choice. This is fascinating to see what you learn about you!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              2. Choose a particular style of eating like paleo, vegetarian, vegan, etc., for a week or so to see how you feel. \n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              There are many options for you to think about and explore. Your health is your life force and you deserve to feel amazing everyday. You are worth this effort. The results you will receive will be magical if you do the work. DO NOT MISS OUT! DO THE WORK!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Download the Food Journal below and print out 10 or more copies.  Complete one every day for at least 10 days. Have fun with this experiment!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              (Of course, you may choose to use an app on a mobile device - it's your choice!)\n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n                <h2 class=\"h3 module__article__title\">Commit to the Filling Out the Food Journal</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              The food journal may seem like a daunting task at first, but it is truly transformational!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Decide what format you will use and what ways you want to experiment with - removing a food group, eating only whole foods and nothing processed, etc.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Be excited! This is life changing. You will learn so much about what your body needs to thrive. Commit to completing your journal for at least 10 days!  Think about it, your homework is to eat food, how amazing is this?\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              After you complete this activity, come back to page 9 every few days and document what you discover about YOU. Ask for support, clarity and share your insights with us in the Facebook Group!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              This is so great - you'll see!\n              </p>\n            </article>\n          </div>\n        "
-      },
-      3: {
-        title: 'Tool #2: The Magnificence of Movement',
-        type: 'tool',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Tool #2: The Magnificence of Movement</h1>\n                <h2 class=\"h3 module__article__title\">Body Brilliance</h2>\n              </hgroup>\n    \n              <blockquote class=\"blockquote serif-stack\">\n                <p class=\"serif-stack font-weight-bold\">\"Take care of your body. It is the only one you have.\"</p>\n                <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n              </blockquote>\n    \n              <p class=\"module__article__text serif-stack mb-4\">\n              You have a brilliant, magnificent body. A body that shows up for you daily and asks for nothing in return. Take a second to acknowledge all that your body does automatically: your heart beats without you asking, your organs function without any direction, and you breathe in and out without any conscious thought. It is time to give back to your beautiful vessel!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              There are a lot of different views when it comes to exercise. Some of us love the thought of a sweaty workout and others are repulsed by this thought. Some of us enjoy yoga and some of us don't have the patience to participate in that type of movement. There is no judgment of right or wrong! However, no matter where you stand, what your level of fitness is or what your body goals are, it is an indisputable fact that your body craves daily movement. \n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              From walking to running to yoga to weight lifting - all movement is good movement. Being fit doesn't meant that you have to run marathons, participate in a body building competition of even go to the gym. Moving your body by playing with your kids, walking and talking with your girlfriends or watching a youtube video are all great ways to take care of your body.\n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n                <h2 class=\"h3 module__article__title\">Child Play</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack mb-4\">\n                Reflecting back on our childhood activities reveals a lot about what brings us joy. We may not want to replicate the same activity but the way we used to move and what we used to find entertaining as a child may be something our adult soul misses today. Take time now to visualize yourself when you were a child. What types of activities did you love to do? Were you active? What movement was fun to you? What brought you joy in terms of movement? Did you swim, play hop scotch, road hockey, run, high jump or something else? Answer the questions in your workbook on page 10 to connect back with what you used to love and what that may indicate for your inner child. \n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n                <h2 class=\"h3 module__article__title\">Video 3: Magnificence of Movement</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              As you watch the video below, record your insights on page 11 of your workbook. There is a surprise at the end of this video - so watch the whole thing!\n              </p>\n              <div class=\"player-wrapper mb-4\">\n                <ReactPlayer\n                  url=\"https://youtu.be/xHIETHvsM7w\"\n                  width=\"100%\"\n                />\n              </div>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">A (Act)</h1>\n                <h2 class=\"h3 module__article__title\">Get up and MOVE</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              ZUMBA TIME!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Did you really think that we were just going to let you watch the Zumba and not require you to get up and do it?! Not a chance!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Clear some space and move your body right NOW! Replay the video and actually follow along to Andrea's Zumba video. Allow yourself to laugh, sweat and be playful. Do it right now! It doesn't matter what you are wearing...that is no excuse!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              How do you incorporate movement into your daily life? What were your takeaways from the tips Andrea shared? Flip to page 12 of your workbook and answer the question to reveal how you relate to body movement, and what challenges and success you have in this area of your life.\n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n                <h2 class=\"h3 module__article__title\">Daily Movement</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack mb-4\">\n              Schedule a minimum of 5 minutes every day to do some deliberate movement. Follow along to Andrea's video every day if you'd like! Set an alarm on your phone to go off morning, noon and night and move your body just because you have can! Write down on page 13 of your workbook how you will commit to celebrating your body with movement everyday!\n              </p>\n\n            </article>\n          </div>\n        "
-      },
-      4: {
-        title: 'Tool #3: Mindset',
-        type: 'tool',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Tool #3: Mindset</h1>\n                <h2 class=\"h3 module__article__title\">Mindful Meditation</h2>\n              </hgroup>\n    \n              <blockquote class=\"blockquote serif-stack\">\n                <p class=\"serif-stack font-weight-bold\">\"Buddha was asked, \"What have you gained from meditation?\" He replied, \"Nothing! However, let me tell you what I've lost: Anger, Anxiety, Depression, and Fear.\"</p>\n                <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n              </blockquote>\n    \n              <p class=\"module__article__text serif-stack mb-4\">\n              The benefits of meditation are continuously being documented in scientific studies and written about in countless journal articles proving its necessity for a fulfilled life.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Meditation is a powerful practice that allows you to tap into your inner wisdom by allowing you to escape into a relaxed state. Your mind is able to escape from anxiety, worry and stress, and you are able to tend to the demands of your everyday life more effectively.  It has been said, \"It is not the musical note that makes the song, it is the silence between the notes\". This is the point of meditation. To get into the space between your conflicting thoughts. In other words, it isn't in our thoughts, but in the moments between our thoughts where clarity is found.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Meditation is a practice, which means it takes time, effort and consistency, in order for you to really reap the massive benefits it offers. Think of meditation like a sport. If you want to score more points, you practice every day so that when it comes to game time you automatically take the winning shots.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              When you redirect your mind to focus on a mantra or your breath this is like practicing your aim so you can score success during the game. So, when it comes to life events (a stressful situation, anxiety, feelings of depression) you've trained your mind to be so mentally fit you are able to focus back on your breath and enter a relaxed state. The truth about the practice of mediation is that you are really practicing being the master of your own emotions, thoughts and ultimately your life. \n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n                <h2 class=\"h3 module__article__title\">Spending Time with YOU</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack mb-4\">\n              What do you know about meditation? What do the words: Spirituality, Universe, God, Mother Earth, Higher Power, Source - mean to you? What words resonate most with you?\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Are you open to practicing this life changing habit of meditation?\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Write your thoughts, judgments, fears, excitements and objections in your workbook on page 14.\n              </p>\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n                <h2 class=\"h3 module__article__title\">Audio 1: Guided Mediation</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Get into a comfortable position, close your eyes and let go as you listen to this guided meditation by Beyond Balance from Youtube. This is an amazing resource with other videos to explore. If you would like to try other meditation teachers and styles feel free to do your own exploration as well. There is so much available to you out there.\n              </p>\n              <div class=\"player-wrapper mb-4\">\n                <ReactPlayer\n                  url=\"https://youtu.be/utfw-rJUvy4\"\n                  width=\"100%\"\n                />\n              </div>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">A (Act)</h1>\n                <h2 class=\"h3 module__article__title\">Practice Mindful Meditation</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Try out the guided mediation one more time if time allows, and then flip to page 16 of your workbook and answer the questions. There are so many ways to meditate, and we encourage you to investigate many different forms to see which one works best for you after the 7 day trial with this one.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              You may already be meditating during your Miracle Morning Routine - or you may choose to meditate at another time.  Try both! See what works best for your need\n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n                <h2 class=\"h3 module__article__title\">Meditate Daily</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack mb-4\">\n              Practice this meditation, or one like it,  for the next 7 days and see how the process feels. Like previously stated, it is a practice. We keep using this word practice for a reason. Practice, practice, practice! Practice means you are learning and improving. Mediation is something you must commit to before you are good at it.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Surrender to the process and allow yourself time to figure it out. You are building your mental fitness with each practice you commit to. You will gain clarity, inner peace, mental strength while reducing challenges, obstacles and difficulties in your life.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              You will notice behavioral changes and an elevation of happiness, concentration ability, as well as a deeper connection to your purpose as you make this commitment. It's worth its weight in gold.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Write about how it felt for you after you practice for 10 days on page 17 of your workbook.\n              </p>\n            </article>\n          </div>\n        "
-      },
-      5: {
-        title: 'Tool #4: Sleep and Systems for Success',
-        type: 'tool',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Tool #4: Sleep and Systems for Success</h1>\n                <h2 class=\"h3 module__article__title\">Discipline Equals Freedom</h2>\n              </hgroup>\n    \n              <blockquote class=\"blockquote serif-stack\">\n                <p class=\"serif-stack font-weight-bold\">\"The most productive day begins the night before.\"</p>\n                <footer class=\"blockquote-footer\"><cite title=\"Anonymous\">Anonymous</cite></footer>\n              </blockquote>\n    \n              <p class=\"module__article__text serif-stack mb-4\">\n              As you're already aware from Module 3: My Plan for Me, having consistent daily habits and actions sets you up for success. This lesson requires using your creative power to explore ways in which you can become even more effective, efficient and productive in all areas of your life.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              This lesson focuses on building a system of success for sleep.  The quality of your sleep is vital to your health, success and fulfillment. It's really not necessary to get a specific quantity of sleep - the quality of your sleep is the key.\n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">R (Reflect)</h1>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack mb-4\">\n              Think of all the areas in your life. Begin by thinking of an area of your life where you are most effective, efficient and productive. Why do you think you are having success in this area? What systems to do you have in place?\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Flip to page 18 of your workbook and record what are you doing that helps you with your success in this area. Move on to the next question and think of an area that you are totally thrilled about. Write about what is happening in the next box on page 18.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              What do you need in order to have more time for your Big Rocks? Think of systems of success that you could implement.\n              </p>\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">O (Observe)</h1>\n                <h2 class=\"h3 module__article__title\">Video 4: Systems for Sleep Success!</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Get into a comfortable position, close your eyes and let go as you listen to this guided meditation by Beyond Balance from Youtube. This is an amazing resource with other videos to explore. If you would like to try other meditation teachers and styles feel free to do your own exploration as well. There is so much available to you out there.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              When you have systems for success, you have intentional routines that support your desired goals.  In the video below, listen to how Rachel sets herself up with an effective nighttime routine that allows her to feel energized and poised for her amazing life.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Then, reflect on your own life and fill in the questions on page 19 of your workbook to identify areas in your life you want to improve.\n              </p>\n              <div class=\"player-wrapper mb-4\">\n                <ReactPlayer\n                  url=\"https://youtu.be/3SWkOwVorIo\"\n                  width=\"100%\"\n                />\n              </div>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">A (Act)</h1>\n                <h2 class=\"h3 module__article__title\">Build Your System for Success</h2>\n              </hgroup>\n              <p class=\"module__article__text serif-stack mb-4\">\n              We are putting it all together. Everything you have learned and experienced during the entire Roadmap course is to be brought into this exercise. Go back through your workbooks for the entire course and then decide on systems for success in at least one area.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Fill out the chart on page 20 for one or more areas. This is your chance to reflect and commit (or re-commit if there is something you committed to earlier in the course but forgot about) by creating a system for success that you are going to do moving forward. Be really clear.\n              </p>\n\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">D (Decide)</h1>\n                <h2 class=\"h3 module__article__title\">Baby Steps</h2>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack mb-4\">\n              Your roadmap learning has ended, but your roadmap life course has just began. To make your journey as smooth as possible, create an environment that fosters success. You will experience setbacks and stressful times on the road, so set yourself up with these systems of success.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              You now have all you need to make this epic journey. It isn't an overnight achievement, It's a process that will continue for an infinite amount of time.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              You will experience highs and lows, and curves and turns.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              This is your 1Life Fully Lived story, make it a worthwhile read! Journal one last time, on page 21 of your workbook, all the things that have impacted you on this course, things you are wanting to keep accountable for and the successes you've already had as you journey down the road.\n              </p>\n              <p class=\"font-weight-bold module__article__text serif-stack mb-4\">\n              CONGRATULATIONS!\n              YOU HAVE COMPLETED THE MY 1LIFE ROADMAP !\n              </p>\n              <p class=\"font-weight-bold module__article__text serif-stack mb-4\">\n              Please share your thoughts in our Facebook group\n              </p>\n              <blockquote class=\"blockquote\">\n                <p class=\"font-weight-bold\">\n                If you have questions about this lesson, contact us at <a href=\"mailto:info@1lifefullylived.org\">info@1lifefullylived.org</a>\n                </p>\n              </blockquote>\n            </article>\n          </div>\n        "
-      },
-      6: {
-        title: 'Wrap up Module 6',
-        type: 'lesson',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Wrap up Module 6</h1>\n                <h2 class=\"h3 module__article__title\">WRAP UP!</h2>\n              </hgroup>\n    \n              <div class=\"player-wrapper mb-4\">\n                <ReactPlayer\n                  url=\"https://youtu.be/N7eww1UVRk8\"\n                  width=\"100%\"\n                />\n              </div>\n\n              <hgroup class=\"mb-3\">\n                <h2 class=\"h3 module__article__title\">WHAT ARE YOU GOING TO DO TO CELEBRATE?!\n                THIS IS HUGE!</h2>\n              </hgroup>\n            </article>\n          </div>\n        "
-      },
-      7: {
-        title: 'Final Thoughts – for now!',
-        type: 'lesson',
-        content: "\n          <div>\n            <article class=\"module__article container mb-5\">\n              <hgroup class=\"mb-3\">\n                <h1 class=\"h2 module__article__title\">Final Thoughts \u2013 for now!</h1>\n              </hgroup>\n\n              <p class=\"module__article__text serif-stack\">\n                Dear Amazing and Passionate You!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Thank you so much for taking this journey with us.  We appreciate you more than you will ever know.  We are actively editing this program based on your feedback and our experience of it and will be launching it \"for real\" in October at our Sacramento Conference, and online to our community, and beyond!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">            \n              As you know, the Roadmap is a class that never really ends. The knowledge and activities you have gained and implemented are life strategies and skills that you will continue to develop during your lifetime. \n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              Life is a journey, and every journey has turbulence, distractions and challenges, so expect them, and embrace them. Failing is encouraged (!) as this is how you learn and create momentum. If you are not willing to fail then you are not willing to try, and without action nothing changes.\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">            \n              Finally, you are never alone. If you need support, please reach out.  If you aren't already a member of our main 1Life Facebook Community, make sure you join us there, too.   We are all here in this together. Don\u2019t struggle on your own; don\u2019t be an island - there are SO MANY people on your team!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">            \n              We wish you continued happiness and success in life - and encourage you to always pass it on!\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              With gratitude,\n              </p>\n              <p class=\"module__article__text serif-stack mb-4\">\n              My 1Life Roadmap Team\n              </p>\n            </article>\n          </div>\n        "
-      }
-    }
-  }
-};
-/* harmony default export */ __webpack_exports__["default"] = (modules);
+
     (function (Component, route) {
       if(!Component) return
       if (false) {}
@@ -14645,7 +14959,6 @@ __webpack_require__.r(__webpack_exports__);
       }
     })(typeof __webpack_exports__ !== 'undefined' ? __webpack_exports__.default : (module.exports.default || module.exports), "/roadmap\\module\\data")
   
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../node_modules/webpack/buildin/harmony-module.js */ "./node_modules/webpack/buildin/harmony-module.js")(module)))
 
 /***/ }),
 
@@ -14660,6 +14973,12 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "AppActions", function() { return AppActions; });
 /* harmony import */ var _Definations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Definations */ "./src/Definations/index.ts");
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _objectDestructuringEmpty(obj) { if (obj == null) throw new TypeError("Cannot destructure undefined"); }
+
 
 /**
  * ACTIONS
@@ -14678,7 +14997,9 @@ var AppActions = {
     };
   },
   updateUserLesson: function updateUserLesson(payload, callback) {
-    return function (dispatch, getState, api) {
+    return function (dispatch, _ref, api) {
+      _objectDestructuringEmpty(_ref);
+
       dispatch(AppActions.Map({
         isUpdatingUserLesson: true
       }));
@@ -14693,7 +15014,9 @@ var AppActions = {
     };
   },
   getUserLessons: function getUserLessons(payload, callback) {
-    return function (dispatch, getState, api) {
+    return function (dispatch, _ref2, api) {
+      _objectDestructuringEmpty(_ref2);
+
       return api.getUserLessons(payload).then(api.checkStatus).then(api.toJSON).then(function (response) {
         return callback(response);
       }).catch(function () {
@@ -14702,11 +15025,42 @@ var AppActions = {
     };
   },
   getUserModules: function getUserModules(payload, callback) {
-    return function (dispatch, getState, api) {
+    return function (dispatch, _ref3, api) {
+      _objectDestructuringEmpty(_ref3);
+
       return api.getUserModules(payload).then(api.checkStatus).then(api.toJSON).then(function (response) {
         return callback(response);
       }).catch(function () {
         return api.errorHandler(dispatch);
+      });
+    };
+  },
+  fetchRoadmapModule: function fetchRoadmapModule(payload, roadmapModulesContent) {
+    var module = payload.module,
+        id = payload.id;
+    return function (dispatch, _ref4, api) {
+      _objectDestructuringEmpty(_ref4);
+
+      dispatch(AppActions.Map({
+        isFetchingRoadmapModule: true
+      }));
+      return api.fetchRoadmapModule(payload).then(api.checkStatus).then(function (response) {
+        return response.text();
+      }).then(function (response) {
+        var newRoadmapModule = _defineProperty({}, module, {
+          content: response
+        });
+
+        if (id) {
+          newRoadmapModule = _defineProperty({}, module, _objectSpread({}, roadmapModulesContent[module], _defineProperty({}, id, {
+            content: response
+          })));
+        }
+
+        dispatch(AppActions.Map({
+          isFetchingRoadmapModule: false,
+          roadmapModulesContent: _objectSpread({}, roadmapModulesContent, newRoadmapModule)
+        })); // return response;
       });
     };
   }
@@ -14973,14 +15327,209 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
+var roadmapModules = {
+  "who-am-i": {
+    "id": 1,
+    "title": "Who Am I?",
+    "nextModule": "my-magnificent-future",
+    "lessons": {
+      "1": {
+        "title": "Who am I? Roadmap Journey Starts here!",
+        "type": "lesson"
+      },
+      "2": {
+        "title": "My Life Balance Wheel",
+        "type": "tool"
+      },
+      "3": {
+        "title": "My DISC Index",
+        "type": "tool"
+      },
+      "4": {
+        "title": "My Miracle Morning",
+        "type": "tool"
+      },
+      "5": {
+        "title": "Who am I?: Wrap Up",
+        "type": "lesson"
+      }
+    }
+  },
+  "my-magnificent-future": {
+    "id": 2,
+    "title": "My Magnificent Future",
+    "nextModule": "my-plan4me",
+    "lessons": {
+      "1": {
+        "title": "My Magnificent Future! Turning Dreams into Reality",
+        "type": "lesson"
+      },
+      "2": {
+        "title": "My 1Life Fully Lived Portrait",
+        "type": "tool"
+      },
+      "3": {
+        "title": "Tool #2: Discover Your Deepest WHYs",
+        "type": "tool"
+      },
+      "4": {
+        "title": "Tool #3: My Personal Board of Directors",
+        "type": "tool"
+      },
+      "5": {
+        "title": "Tool #4: My Transition Story",
+        "type": "tool"
+      },
+      "6": {
+        "title": "My Magnificent Future: Wrap up",
+        "type": "lesson"
+      },
+      "7": {
+        "title": "Next Time…",
+        "type": "lesson"
+      }
+    }
+  },
+  "my-plan4me": {
+    "id": 3,
+    "title": "My Plan4Me!",
+    "nextModule": "financial-offense",
+    "lessons": {
+      "1": {
+        "title": "My Plan4Me! Journey Preparation",
+        "type": "lesson"
+      },
+      "2": {
+        "title": "My DISC Index",
+        "type": "tool"
+      },
+      "3": {
+        "title": "Tool #2: 1 Year Plan",
+        "type": "tool"
+      },
+      "4": {
+        "title": "Tool #3: Putting It All Together",
+        "type": "tool"
+      },
+      "5": {
+        "title": "My Plan4Me Wrap up",
+        "type": "lesson"
+      },
+      "6": {
+        "title": "Next Time…",
+        "type": "lesson"
+      }
+    }
+  },
+  "financial-offense": {
+    "id": 4,
+    "title": "Module 4: Financial Offense",
+    "nextModule": "financial-defense",
+    "lessons": {
+      "1": {
+        "title": "Welcome to Finances!",
+        "type": "lesson"
+      },
+      "2": {
+        "title": "Welcome to Finances!",
+        "type": "lesson"
+      },
+      "3": {
+        "title": "Tool #2: Welcome to Finances!",
+        "type": "tool"
+      },
+      "4": {
+        "title": "Tool #3: Maximizing My Income",
+        "type": "tool"
+      },
+      "5": {
+        "title": "Financial Offense: Wrap up",
+        "type": "lesson"
+      },
+      "6": {
+        "title": "Next Time…",
+        "type": "lesson"
+      }
+    }
+  },
+  "financial-defense": {
+    "id": 5,
+    "title": "Module 5: Financial Defense!",
+    "nextModule": "fit-for-my-future",
+    "lessons": {
+      "1": {
+        "title": "Introduction: Financial Defense",
+        "type": "lesson"
+      },
+      "2": {
+        "title": "Tool #1: Creating a Budget!",
+        "type": "lesson"
+      },
+      "3": {
+        "title": "Tool #2: Debt Reduction and Investment Basics",
+        "type": "lesson"
+      },
+      "4": {
+        "title": "Tool #3: Sprint and Marathon Plan",
+        "type": "lesson"
+      },
+      "5": {
+        "title": "Module 5: Wrap up",
+        "type": "lesson"
+      },
+      "6": {
+        "title": "Next Time…",
+        "type": "lesson"
+      }
+    }
+  },
+  "fit-for-my-future": {
+    "id": 6,
+    "title": "Module 6: Fit For My Future!",
+    "nextModule": null,
+    "lessons": {
+      "1": {
+        "title": "Fit For My Future!",
+        "type": "lesson"
+      },
+      "2": {
+        "title": "Tool #1: Fuel for My Future",
+        "type": "tool"
+      },
+      "3": {
+        "title": "Tool #2: The Magnificence of Movement",
+        "type": "tool"
+      },
+      "4": {
+        "title": "Tool #3: Mindset",
+        "type": "tool"
+      },
+      "5": {
+        "title": "Tool #4: Sleep and Systems for Success",
+        "type": "tool"
+      },
+      "6": {
+        "title": "Wrap up Module 6",
+        "type": "lesson"
+      },
+      "7": {
+        "title": "Final Thoughts – for now!",
+        "type": "lesson"
+      }
+    }
+  }
+  /**
+   * INITIAL_STATE
+  */
 
-/**
- * INITIAL_STATE
-*/
+};
 var INITIAL_STATE = {
   prevPathDepth: 0,
   hasRequestError: false,
-  isUpdatingUserLesson: false
+  isUpdatingUserLesson: false,
+  isFetchingRoadmapModules: false,
+  roadmapModules: roadmapModules,
+  roadmapModulesContent: {}
 };
 
 /**
@@ -15131,7 +15680,10 @@ var UserReducer = function UserReducer() {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Actions__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Actions */ "./src/Actions/index.ts");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./src/Redux/utils.ts");
+/* harmony import */ var isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! isomorphic-fetch */ "./node_modules/isomorphic-fetch/fetch-npm-browserify.js");
+/* harmony import */ var isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils */ "./src/Redux/utils.ts");
+
 
 
 var hostAddress = 'http://localhost:3333/api';
@@ -15145,7 +15697,7 @@ function prefixHostAddress(url) {
 
 
 function createUser(user) {
-  return fetch(prefixHostAddress('/v1/register'), {
+  return isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default()(prefixHostAddress('/v1/register'), {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -15160,12 +15712,12 @@ function createUser(user) {
 
 
 function updateUserModule(payload) {
-  return fetch(prefixHostAddress('/v1/modules/updateUserModule'), {
+  return isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default()(prefixHostAddress('/v1/modules/updateUserModule'), {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_1__["getToken"]())
+      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_2__["getToken"]())
     },
     body: JSON.stringify(payload)
   });
@@ -15176,12 +15728,12 @@ function updateUserModule(payload) {
 
 
 function updateUserLesson(payload) {
-  return fetch(prefixHostAddress('/v1/modules/updateUserLesson'), {
+  return isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default()(prefixHostAddress('/v1/modules/updateUserLesson'), {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_1__["getToken"]())
+      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_2__["getToken"]())
     },
     body: JSON.stringify(payload)
   });
@@ -15192,12 +15744,12 @@ function updateUserLesson(payload) {
 
 
 function getUserLessons(payload) {
-  return fetch(prefixHostAddress('/v1/modules/getUserLessons'), {
+  return isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default()(prefixHostAddress('/v1/modules/getUserLessons'), {
     method: 'post',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_1__["getToken"]())
+      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_2__["getToken"]())
     },
     body: JSON.stringify(payload)
   });
@@ -15208,12 +15760,28 @@ function getUserLessons(payload) {
 
 
 function getUserModules(payload) {
-  return fetch(prefixHostAddress('/v1/modules/getUserModules'), {
+  return isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default()(prefixHostAddress('/v1/modules/getUserModules'), {
     method: 'post',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_1__["getToken"]())
+      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_2__["getToken"]())
+    },
+    body: JSON.stringify(payload)
+  });
+}
+/**
+ * Fetches Roadmap Data
+ */
+
+
+function fetchRoadmapModule(payload) {
+  return isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default()(prefixHostAddress('/v1/getModuleData'), {
+    method: 'post',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': "Bearer ".concat(_utils__WEBPACK_IMPORTED_MODULE_2__["getToken"]())
     },
     body: JSON.stringify(payload)
   });
@@ -15224,7 +15792,7 @@ function getUserModules(payload) {
 
 
 function authenticateUser(user) {
-  return fetch(prefixHostAddress('/v1/login'), {
+  return isomorphic_fetch__WEBPACK_IMPORTED_MODULE_1___default()(prefixHostAddress('/v1/login'), {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -15293,6 +15861,7 @@ function setUser(response) {
 
 function errorHandler(dispatch, e) {
   alert('Sorry, we encountered an error trying to process your request. Please try again.');
+  console.log(e);
   dispatch(_Actions__WEBPACK_IMPORTED_MODULE_0__["AppActions"].Map({
     hasRequestError: true
   }));
@@ -15307,6 +15876,7 @@ function toJSON(response) {
   createUser: createUser,
   checkStatus: checkStatus,
   errorHandler: errorHandler,
+  fetchRoadmapModule: fetchRoadmapModule,
   getUserLessons: getUserLessons,
   getUserModules: getUserModules,
   setToken: setToken,

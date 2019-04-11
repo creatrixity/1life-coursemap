@@ -7,9 +7,7 @@ import Link from 'next/link';
 import { IHomePage, IStore } from '@Interfaces';
 import { AppActions } from '@Actions';
 import { ArrowRightIcon } from '@Components/Icons';
-import { ModulesInterface } from '../roadmap/module/data';
 import {
-	getModulesData,
 	getUser,
 	getToken
 } from '@Redux/utils'
@@ -17,8 +15,6 @@ import {
 import './roadmap.scss';
 
 export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.IState> {
-	private modules:any = {};
-
 	constructor (props:IHomePage.IProps) {
 		super(props);
 
@@ -28,10 +24,8 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 	}
 
 	componentDidMount () {
-		if (!getToken()) return this.props.router.push('/login')
+		if (!getToken()) return this.props.router.replace('/login')
 
-		const modules:ModulesInterface = getModulesData();
-		this.modules = modules;
 		const user = getUser();
 
 		if (user) {
@@ -56,6 +50,9 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 	}
 
 	public render(): JSX.Element {
+		const { app } = this.props;
+		const { roadmapModules } = app;
+
 		return (
 			<div className="d-flex flex-column">
 				<Head>
@@ -81,22 +78,22 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 						</section>
 
 						{ Object
-							.keys(this.modules)
+							.keys(roadmapModules)
 							.filter(moduleKey => moduleKey !== '__route')
 							.map((moduleKey:string, idx) => {
-								const moduleId:any = this.modules[moduleKey].id;
+								const moduleId:any = roadmapModules[moduleKey].id;
 
 								return (this.determineModuleStatus(moduleId)) ? (
 									<section className="col-md-12 mb-4" key={idx}>
 										<div className={'text-center card roadmap-listing roadmap-listing--active'}>
 											<section className="d-flex flex-column align-items-center">
 												<span className="roadmap-listing__number font-weight-bold mb-2">
-													{this.modules[moduleKey].id}
+													{roadmapModules[moduleKey].id}
 												</span>
-												<h3 className={'h4 roadmap-listing__title mb-0'}>{this.modules[moduleKey].title}</h3>
+												<h3 className={'h4 roadmap-listing__title mb-0'}>{roadmapModules[moduleKey].title}</h3>
 												<p className="font-style-italic roadmap-listing__subtext text-gray mb-4">
-													{this.modules[moduleKey].lessons ?
-													Object.keys(this.modules[moduleKey].lessons).length:0} Lessons
+													{roadmapModules[moduleKey].lessons ?
+														Object.keys(roadmapModules[moduleKey].lessons).length: 0} Lessons
 												</p>
 			
 												<Link href={`/roadmap/${moduleKey}`}>
@@ -114,12 +111,12 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 											<img src="/static/img/lock.svg" className="roadmap-listing__icon" alt=""/>
 											<section className="d-flex flex-column align-items-center">
 												<span className="roadmap-listing__number font-weight-bold mb-2">
-												{this.modules[moduleKey].id}
+												{roadmapModules[moduleKey].id}
 												</span>
-												<h3 className={'h4 roadmap-listing__title'}>{this.modules[moduleKey].title}</h3>
+												<h3 className={'h4 roadmap-listing__title'}>{roadmapModules[moduleKey].title}</h3>
 												<p className="font-style-italic roadmap-listing__subtext text-gray">
-													{this.modules[moduleKey].lessons ?
-													Object.keys(this.modules[moduleKey].lessons).length:0} Lessons
+													{roadmapModules[moduleKey].lessons ?
+													Object.keys(roadmapModules[moduleKey].lessons).length:0} Lessons
 												</p>
 											</section>
 										</div>
@@ -134,7 +131,11 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 	}
 }
 
-const mapStateToProps = (state: IStore) => state.home;
+const mapStateToProps = (state: IStore) => {
+	return {
+		app: state.app
+	}
+};
 
 const mapDispatchToProps = (dispatch:Dispatch) => (
 	{
