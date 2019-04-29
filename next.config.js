@@ -4,13 +4,23 @@ const withTypescript = require('@zeit/next-typescript')
 const withCSS = require('@zeit/next-css')
 const withSass = require('@zeit/next-sass');
 const withBundleAnalyzer = require("@zeit/next-bundle-analyzer");
-const nextRuntimeDotenv = require('next-runtime-dotenv')
+const nextEnv = require('next-env');
+const dotenvLoad = require('dotenv-load');
 
-const withConfig = nextRuntimeDotenv({
-	public: [
-		'API_URL'
-	]
-})
+const { ENV } = process.env
+
+dotenvLoad();
+
+const env = ENV.trim() || 'development';
+
+const envSpecifics = {
+  development: {
+    api: process.env.NEXT_PUBLIC_DEVELOPMENT_API_URL,
+  },
+  production: {
+    api: process.env.NEXT_PUBLIC_PRODUCTION_API_URL,
+  },
+}[env];
 
 module.exports = withPlugins(
 	[
@@ -18,9 +28,12 @@ module.exports = withPlugins(
 		[withCSS],
 		[withSass],
 		[withBundleAnalyzer],
-		[withConfig]
+		[nextEnv()]
 	],
 	{
+		publicRuntimeConfig: {
+			envSpecifics
+		},
 		analyzeServer: ["server", "both"].includes(process.env.BUNDLE_ANALYZE),
 		analyzeBrowser: ["browser", "both"].includes(process.env.BUNDLE_ANALYZE),
 		bundleAnalyzerConfig: {

@@ -2,8 +2,11 @@ import { Dispatch } from 'redux';
 import { AppActions } from '@Actions';
 import fetch from 'isomorphic-fetch';
 import * as utils from './utils'
+import getConfig from 'next/config';
 
-const hostAddress = 'http://134.209.63.107/api';
+const { publicRuntimeConfig: { envSpecifics } } = getConfig();
+
+const hostAddress = envSpecifics.api;
 
 function prefixHostAddress (url:string) {
   return `${hostAddress}${url}`;

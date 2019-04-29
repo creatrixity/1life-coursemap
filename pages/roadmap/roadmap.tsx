@@ -12,6 +12,7 @@ import {
 	getToken
 } from '@Redux/utils'
 
+
 import './roadmap.scss';
 
 export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.IState> {
@@ -21,6 +22,9 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 		this.state = {
 			userModules: []
 		}
+	}
+
+	getInitialProps () {
 	}
 
 	componentDidMount () {
