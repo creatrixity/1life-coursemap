@@ -4,3 +4,4 @@ export {
   StarIcon
 } from '@Components/Icons';
 export { StarsCast } from '@Components/StarsCast';
+export { JournalInput } from '@Components/JournalInput';

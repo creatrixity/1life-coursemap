@@ -22,11 +22,13 @@ declare module IHomePage {
 	export interface IDispatchProps {
 		Map(payload: Actions.IMapPayload): Actions.IMapResponse
 		createUser?: any;
+		createJournalFeedback?: any;
+		getJournalFeedback?: any;
 		authenticateUser?: any;
 		updateUserLesson?: any;
 		getUserLessons?: any;
 		getUserModules?: any;
-		fetchRoadmapModule?: any;
+		fetchCoursemapModule?: any;
   }
     
 	export type IProps = IOwnProps & IStateProps & IDispatchProps;

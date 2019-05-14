@@ -2,9 +2,10 @@ const routes = require('next-routes')();
 
 routes
 	.add('/', '/home/index')
-	.add('/roadmap', '/roadmap/index')
-	.add('/roadmap/:module', '/roadmap/module/index')
-	.add('/roadmap/:module/:lesson', '/roadmap/module/lesson')
+	.add('/courses', '/courses/index')
+	.add('/courses/:course', '/coursemap/index')
+	.add('/courses/:course/:module', '/coursemap/module/index')
+	.add('/courses/:course/:module/:lesson', '/coursemap/module/lesson')
 	.add('/welcome', '/welcome')
 	.add('/profile', '/profile')
 	.add('/login', '/login')

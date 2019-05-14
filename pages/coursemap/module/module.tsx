@@ -11,7 +11,7 @@ import Spinner from '@Components/LoadSpinner';
 import { AppActions } from '@Actions';
 import { IHomePage, IStore } from '@Interfaces';
 
-import '../../roadmap/module.scss'
+import '../../coursemap/module.scss'
 import {
 	getUser,
 	getToken
@@ -20,6 +20,7 @@ import { computeModulesProgression } from '../../../src/Helpers/index'
 
 export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.IState> {
 	content = '';
+	course = '';
 	moduleTitle = '';
 	module = '';
 	lessons: { [title:number]: any } = {}
@@ -38,26 +39,30 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 		const {
 			app,
 			getUserLessons,
-			fetchRoadmapModule
+			fetchCoursemapModule
 		} = this.props;
-		const { roadmapModules, roadmapModulesContent } = app;
+		const { coursemapModules, coursemapModulesContent } = app;
 
-		const module:string = this.props.router.query.module;
+		const { module, course } = this.props.router.query;
+
 		this.module = module;
-		fetchRoadmapModule({
-			module
-		}, roadmapModulesContent)
+		fetchCoursemapModule({
+			module,
+			course
+		}, coursemapModulesContent)
 
-		this.content = roadmapModules[module].content || 'Loading...';
-		this.moduleTitle = roadmapModules[module].title
-		const moduleLessons = roadmapModules[module].lessons;
+		this.course = course;
+		this.content = coursemapModules[course].modules[module].content || 'Loading...';
+		this.moduleTitle = coursemapModules[course].modules[module].title
+		const moduleLessons = coursemapModules[course].modules[module].lessons;
 
 		this.lessons = moduleLessons
 		const user = getUser()
 		let moduleProgression;
 
 		getUserLessons({
-			moduleId: roadmapModules[module].id,
+			moduleId: coursemapModules[course].modules[module].id,
+			courseId: coursemapModules[course].id,
 			userId: user.id
 		}, (userLessons:any) => {
 			moduleProgression =  computeModulesProgression(userLessons, Object.keys(moduleLessons).length);
@@ -66,7 +71,7 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 				this.props.updateUserLesson({
 					lessonId: 1,
 					lessonsCount: Object.keys(moduleLessons).length,
-					moduleId: roadmapModules[module].id,
+					moduleId: coursemapModules[course][module].id,
 					userId: user.id,
 					progression: 0
 				}, (lessons:any) => {
@@ -110,14 +115,14 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 	}
 
 	public renderUpcomingLinks(): JSX.Element {
+		const lessonKeys = Object.keys(this.lessons);
 		const userLessons:Array<number> = this.state.userLessons || [];
 		return (
 			<div>
 				<h4 className={'h5 mb-3'}>Up Next</h4>
 
 				<ul className={'list list-unstyled'}>
-
-				{Object.keys(this.lessons).map((lessonId: any, key:number) => {
+				{lessonKeys.map((lessonId: any, key:number) => {
 					const {
 						title,
 						type
@@ -125,8 +130,8 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 
 					return (
 						<li key={key} className={'mb-2'}>
-						{ (userLessons).includes(parseInt(lessonId, 10)) ? (
-							<Link prefetch href={`/roadmap/${this.module}/lesson-${lessonId}`}>
+						{  lessonKeys.length === 1 || (userLessons).includes(parseInt(lessonId, 10)) ? (
+							<Link prefetch href={`/courses/${this.course}/${this.module}/lesson-${lessonId}`}>
 								{this.renderModuleCardLink({
 									icon: type === 'lesson' ? PlayIcon: ToolIcon,
 									title,
@@ -145,15 +150,15 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 						</li>
 					)
 				})}
-
 				</ul>
+
 			</div>
 		);
 	}
 
 	public render(): JSX.Element {
 		const { app } = this.props
-		const { roadmapModulesContent } = app;
+		const { coursemapModulesContent } = app;
 
 		return (
 			<div className="d-flex flex-column module" style={{ paddingTop: '100px' }}>
@@ -162,7 +167,7 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 				</Head>
 
         <Header
-					backlinkHref={'/roadmap'}
+					backlinkHref={`/courses/${this.course}`}
 					title={this.moduleTitle}
 					style={{
 						position: 'fixed',
@@ -176,7 +181,7 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 
 				<section>
 					<div className={'container'}>
-						{convert(roadmapModulesContent[this.module] ? roadmapModulesContent[this.module].content : 'Loading...')}
+						{convert(coursemapModulesContent[this.course] ? coursemapModulesContent[this.course][this.module].content : 'Loading...')}
 						<section className={'row'}>
 							<div className={'col-12'}>
 								{this.renderUpcomingLinks()}
@@ -184,7 +189,6 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 						</section>
 					</div>
 				</section>
-
 			</div>
 		);
 	}
@@ -202,7 +206,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => (
 	{
 		updateUserLesson: bindActionCreators(AppActions.updateUserLesson, dispatch),
 		getUserLessons: bindActionCreators(AppActions.getUserLessons, dispatch),
-		fetchRoadmapModule: bindActionCreators(AppActions.fetchRoadmapModule, dispatch),
+		fetchCoursemapModule: bindActionCreators(AppActions.fetchCoursemapModule, dispatch),
 	}
 );
 

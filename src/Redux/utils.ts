@@ -33,9 +33,8 @@ export function getModulesData () {
   // const modulesData =  window.localStorage.getItem('modulesData');
 
   // if (!modulesData) {
-    const data = require('../../pages/roadmap/module/data.ts').default;
-    window.localStorage.setItem('modulesData', JSON.stringify(data));
-
+    const data = require('../../pages/coursemap/module/data.ts').default;
+    
     return data;
   // };
 

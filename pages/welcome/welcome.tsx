@@ -85,7 +85,7 @@ export class WelcomePage extends React.Component<IHomePage.IProps, IHomePage.ISt
 							<p>Ready? Let’s dive in!</p>
 						</article>
 
-					<Link href={'/roadmap'}>
+					<Link href={'/courses'}>
 						<a className={'btn btn-brand py-4 btn-block'}>Dive in to the roadmap</a>
 					</Link>
 

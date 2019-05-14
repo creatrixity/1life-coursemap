@@ -1,5 +1,11 @@
+import { normalize, schema } from 'normalizr';
+
 import { Dispatch } from 'redux';
 import { ActionConsts } from "@Definations";
+
+const feedbackSchema = new schema.Entity('feedback', {}, {
+  idAttribute: 'feedback_id'
+});
 
 /**
  * ACTIONS
@@ -13,6 +19,47 @@ export const AppActions = {
 	Reset : () => ({
 		type: ActionConsts.App.ResetReducer
 	}),
+
+	createJournalFeedback : (payload:any, callback:Function) => {
+    return ((dispatch:Dispatch, {}, api:any) => {			
+      return api.createJournalFeedback(payload)
+        .then(api.checkStatus)
+				.then(api.toJSON)
+        .then((response:any) => { 
+          return callback(response)
+        })
+        .catch(() => api.errorHandler(dispatch))
+    })
+  },
+
+  getJournalFeedback : (payload:any) => {
+    const { course_id, module_id, lesson_id } = payload;
+
+    return ((dispatch:Dispatch, getState:any, api:any) => {			
+      return api.getJournalFeedback(payload)
+        .then(api.checkStatus)
+				.then(api.toJSON)
+        .then((response:any) => {
+          const { entities: { feedback }}= normalize(response, [feedbackSchema]);
+
+          let newCoursemapModuleFeedback = {
+            [course_id]: {
+              [module_id]: {
+                [lesson_id]: feedback
+              }
+            }
+          }
+
+          dispatch(AppActions.Map({
+            coursemapModulesFeedback: {
+              ...getState().app.coursemapModulesFeedback,
+              ...newCoursemapModuleFeedback
+            }
+          }))
+        })
+        .catch(() => api.errorHandler(dispatch))
+    })
+  },
 
 	updateUserLesson : (payload:any, callback:Function) => {
     return ((dispatch:Dispatch, {}, api:any) => {
@@ -56,46 +103,46 @@ export const AppActions = {
     })
   },
 
-	fetchRoadmapModule : (payload:any, roadmapModulesContent:any) => {
-    const { module, id } = payload;
-
-    console.log(payload)
+	fetchCoursemapModule : (payload:any, coursemapModulesContent:any) => {
+    const { module, id, course } = payload;
 
     return ((dispatch:Dispatch, {}, api:any) => {	
-      dispatch(AppActions.Map({ isFetchingRoadmapModule: true }))
+      dispatch(AppActions.Map({ isFetchingCoursemapModule: true }))
       		
-      return api.fetchRoadmapModule(payload)
+      return api.fetchCoursemapModule(payload)
         .then(api.checkStatus)
         .then((response: any) => response.text())
         .then((response:any) => { 
-          let newRoadmapModule = {
-            [module]: {
-              content: response
+          let newCoursemapModule = {
+            [course]: {
+              [module]: {
+                content: response
+              }
             }
           }
 
           if (id) {
-            newRoadmapModule = {
-              [module]: {
-                ...roadmapModulesContent[module],
-                [id]: {
-                  content: response
+            newCoursemapModule = {
+              [course]: {
+                [module]: {
+                  ...coursemapModulesContent[module],
+                  [id]: {
+                    content: response
+                  }
                 }
               }
             }
           }
       
           dispatch(AppActions.Map({
-            isFetchingRoadmapModule: false,
-            roadmapModulesContent: {
-              ...roadmapModulesContent,
-              ...newRoadmapModule
+            isFetchingCoursemapModule: false,
+            coursemapModulesContent: {
+              ...coursemapModulesContent,
+              ...newCoursemapModule
             }
           })
-          )
-
-          // return response;
-        })
+        )
+      })
     })
   },
 }

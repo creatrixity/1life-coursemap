@@ -27,6 +27,35 @@ function createUser (user:Object) {
 }
 
 /**
+ * Creates an entry in the journal.
+ */
+function createJournalFeedback (payload:Object) {
+  return fetch(prefixHostAddress('/v1/feedback'), {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+}
+
+/**
+ * Fetches journal feedback
+ */
+function getJournalFeedback (payload:Object) {
+  return fetch(prefixHostAddress('/v1/feedback/getFeedback'), {
+    method: 'post',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${utils.getToken()}`
+    },
+    body: JSON.stringify(payload)
+  })
+}
+
+/**
  * Updates a user module.
  */
 function updateUserModule (payload:Object) {
@@ -89,7 +118,7 @@ function getUserModules (payload:Object) {
 /**
  * Fetches Roadmap Data
  */
-function fetchRoadmapModule (payload:Object) {
+function fetchCoursemapModule (payload:Object) {
   return fetch(prefixHostAddress('/v1/getModuleData'), {
     method: 'post',
     headers: {
@@ -176,10 +205,12 @@ function toJSON(response:any) {
 
 export default {
   authenticateUser,
+  createJournalFeedback,
+  getJournalFeedback,
   createUser,
   checkStatus,
   errorHandler,
-  fetchRoadmapModule,
+  fetchCoursemapModule,
   getUserLessons,
   getUserModules,
   setToken,

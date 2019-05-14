@@ -12,10 +12,12 @@ import {
 	getToken
 } from '@Redux/utils'
 
+import './coursemap.scss';
 
-import './roadmap.scss';
+export class CoursemapPage extends React.Component<IHomePage.IProps, IHomePage.IState> {
+	private coursemapModules:any = {};
+	private course:string = '';
 
-export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.IState> {
 	constructor (props:IHomePage.IProps) {
 		super(props);
 
@@ -24,17 +26,22 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 		}
 	}
 
-	getInitialProps () {
-	}
-
 	componentDidMount () {
 		if (!getToken()) return this.props.router.replace('/login')
+
+		const { app, router } = this.props;
+		const { coursemapModules } = app;
+		const { course } = router.query;
+
+		this.coursemapModules = coursemapModules;
+		this.course = course;
 
 		const user = getUser();
 
 		if (user) {
 			this.props.getUserModules({
-				userId: user.id
+				userId: user.id,
+				courseId: this.coursemapModules[this.course].id
 			}, (userModules:any) => {
 				userModules = userModules
 				.filter((userModule:any) => userModule.progression === 100)
@@ -50,17 +57,14 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 	determineModuleStatus (moduleId:any) {
 		const userModules:any = this.state.userModules || [];
 
-		return userModules.includes(moduleId - 1) || moduleId === 1
+		return userModules.includes(moduleId - 1)
 	}
 
 	public render(): JSX.Element {
-		const { app } = this.props;
-		const { roadmapModules } = app;
-
 		return (
 			<div className="d-flex flex-column">
 				<Head>
-					<title>My Roadmap | 1Life</title>
+					<title>My Coursemap | 1Life</title>
 				</Head>
 				<section className="container">
 					<div className="row">
@@ -77,31 +81,31 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 						<section className="col-md-12 mb-5">
 							<div className={'d-flex align-items-center'}>
 								<img src={'/static/img/cap.svg'} className={'mr-3'} width={100} />
-								<h1 className={'h3 roadmap-title text-gray'}>1Life Roadmap</h1>
+								<h1 className={'h4 coursemap-title text-gray'}>Course Modules</h1>
 							</div>
 						</section>
-
-						{ Object
-							.keys(roadmapModules)
+						{ this.course.length > 0 && 
+							Object
+							.keys(this.coursemapModules[this.course].modules)
 							.filter(moduleKey => moduleKey !== '__route')
 							.map((moduleKey:string, idx) => {
-								const moduleId:any = roadmapModules[moduleKey].id;
+								const moduleObj:any = this.coursemapModules[this.course].modules[moduleKey];
+								let { title, id, lessons } = moduleObj
+								const lessonsCount = lessons && Object.keys(lessons).length;
 
-								return (this.determineModuleStatus(moduleId)) ? (
+
+								return (this.determineModuleStatus(id) || idx === 0) ? (
 									<section className="col-md-12 mb-4" key={idx}>
-										<div className={'text-center card roadmap-listing roadmap-listing--active'}>
+										<div className={'text-center card coursemap-listing coursemap-listing--active'}>
 											<section className="d-flex flex-column align-items-center">
-												<span className="roadmap-listing__number font-weight-bold mb-2">
-													{roadmapModules[moduleKey].id}
-												</span>
-												<h3 className={'h4 roadmap-listing__title mb-0'}>{roadmapModules[moduleKey].title}</h3>
-												<p className="font-style-italic roadmap-listing__subtext text-gray mb-4">
-													{roadmapModules[moduleKey].lessons ?
-														Object.keys(roadmapModules[moduleKey].lessons).length: 0} Lessons
+												<span className="coursemap-listing__number font-weight-bold mb-2">{idx + 1}</span>
+												<h3 className={'h4 coursemap-listing__title mb-0'}>{title}</h3>
+												<p className="font-style-italic coursemap-listing__subtext text-gray mb-4">
+													{ lessonsCount } { lessonsCount === 1 ? 'Lesson': 'Lessons'}
 												</p>
 			
-												<Link href={`/roadmap/${moduleKey}`}>
-													<button className="btn btn-success roadmap-listing__btn">
+												<Link href={`/courses/${this.course}/${moduleKey}`}>
+													<button className="btn btn-success coursemap-listing__btn">
 														<span className={'mr-2'}>Let's Go</span>
 														<ArrowRightIcon />
 													</button>
@@ -111,16 +115,16 @@ export class RoadmapPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 									</section>
 								): (
 									<section className="col-md-12 mb-4" key={idx}>
-										<div className={'text-center card roadmap-listing'}>
-											<img src="/static/img/lock.svg" className="roadmap-listing__icon" alt=""/>
+										<div className={'text-center card coursemap-listing'}>
+											<img src="/static/img/lock.svg" className="coursemap-listing__icon" alt=""/>
 											<section className="d-flex flex-column align-items-center">
-												<span className="roadmap-listing__number font-weight-bold mb-2">
-												{roadmapModules[moduleKey].id}
+												<span className="coursemap-listing__number font-weight-bold mb-2">
+												{idx + 1}
 												</span>
-												<h3 className={'h4 roadmap-listing__title'}>{roadmapModules[moduleKey].title}</h3>
-												<p className="font-style-italic roadmap-listing__subtext text-gray">
-													{roadmapModules[moduleKey].lessons ?
-													Object.keys(roadmapModules[moduleKey].lessons).length:0} Lessons
+												<h3 className={'h4 coursemap-listing__title'}>{this.coursemapModules[this.course].modules[moduleKey].title}</h3>
+												<p className="font-style-italic coursemap-listing__subtext text-gray">
+													{this.coursemapModules[this.course].modules[moduleKey].lessons ?
+													Object.keys(this.coursemapModules[this.course].modules[moduleKey].lessons).length:0} Lessons
 												</p>
 											</section>
 										</div>
@@ -147,4 +151,4 @@ const mapDispatchToProps = (dispatch:Dispatch) => (
 	}
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(RoadmapPage);
+export default connect(mapStateToProps, mapDispatchToProps)(CoursemapPage);
