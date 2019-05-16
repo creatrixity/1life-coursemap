@@ -1,0 +1,21 @@
+.module__article__text {
+  font-size: 20px; }
+
+.module__link-card__preview {
+  background: #77B02A;
+  width: 30%; }
+
+.module__link-card__content {
+  width: 70%; }
+
+.module__link-card__title {
+  color: #77B02A; }
+
+.module__link-card--disabled .module__link-card__preview {
+  background: #eee; }
+
+.module__link-card--disabled .module__link-card__title {
+  color: #ccc; }
+
+
+/*# sourceMappingURL=styles.chunk.css.map*/

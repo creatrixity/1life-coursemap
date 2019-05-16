@@ -51,6 +51,7 @@ module.exports = withPlugins(
 			return {
 				'/index.html': { page: '/home' },
 				'/welcome/index.html': { page: '/welcome' },
+				'/courses/index.html': { page: '/courses' },
 				'/courses/1life-digital-academy/index.html': { page: '/coursemap', query: { course: '1life-digital-academy' } },
 				'/login/index.html': { page: '/login' },
 				'/register/index.html': { page: '/register' },
