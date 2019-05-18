@@ -16238,6 +16238,22 @@ var coursemapModules = {
           "1": {
             "title": "My Dream 4 Me",
             "type": "lesson"
+          },
+          "2": {
+            "title": "Who Am I At My Core?",
+            "type": "lesson"
+          },
+          "3": {
+            "title": "Thriving In My Environment",
+            "type": "lesson"
+          },
+          "4": {
+            "title": "My Relationship With Me",
+            "type": "lesson"
+          },
+          "5": {
+            "title": "Develop My Fulfilling Future",
+            "type": "lesson"
           }
         }
       }
@@ -16624,7 +16640,7 @@ function setUser(response) {
 
 
 function errorHandler(dispatch, e) {
-  alert('Sorry, we encountered an error trying to process your request. Please try again.');
+  console.log('Sorry, we encountered an error trying to process your request. Please try again.');
   dispatch(_Actions__WEBPACK_IMPORTED_MODULE_0__["AppActions"].Map({
     hasRequestError: true
   }));
