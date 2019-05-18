@@ -117,6 +117,7 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 	public renderUpcomingLinks(): JSX.Element {
 		const lessonKeys = Object.keys(this.lessons);
 		const userLessons:Array<number> = this.state.userLessons || [];
+		
 		return (
 			<div>
 				<h4 className={'h5 mb-3'}>Up Next</h4>
@@ -130,7 +131,7 @@ export class ModulePage extends React.Component<IHomePage.IProps, IHomePage.ISta
 
 					return (
 						<li key={key} className={'mb-2'}>
-						{  lessonKeys.length === 1 || (userLessons).includes(parseInt(lessonId, 10)) ? (
+						{  key === 0 || (userLessons).includes(parseInt(lessonId, 10)) ? (
 							<Link prefetch href={`/courses/${this.course}/${this.module}/lesson-${lessonId}`}>
 								{this.renderModuleCardLink({
 									icon: type === 'lesson' ? PlayIcon: ToolIcon,

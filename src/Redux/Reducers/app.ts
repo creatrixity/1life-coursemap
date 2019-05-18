@@ -245,6 +245,22 @@ const coursemapModules:any = {
           "1": {
             "title": "My Dream 4 Me",
             "type": "lesson"
+          },
+          "2": {
+            "title": "Who Am I At My Core?",
+            "type": "lesson"
+          },
+          "3": {
+            "title": "Thriving In My Environment",
+            "type": "lesson"
+          },
+          "4": {
+            "title": "My Relationship With Me",
+            "type": "lesson"
+          },
+          "5": {
+            "title": "Develop My Fulfilling Future",
+            "type": "lesson"
           }
         }
       }

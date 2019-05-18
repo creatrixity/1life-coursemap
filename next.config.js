@@ -107,6 +107,9 @@ module.exports = withPlugins(
 				'/courses/my-1life-roadmap-journal/getting-started/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'getting-started', lesson: 'lesson-3' } },
 				'/courses/my-1life-roadmap-journal/first-quarter/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-1' } },
 				'/courses/my-1life-roadmap-journal/first-quarter/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-2' } },
+				'/courses/my-1life-roadmap-journal/first-quarter/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-3' } },
+				'/courses/my-1life-roadmap-journal/first-quarter/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-4' } },
+				'/courses/my-1life-roadmap-journal/first-quarter/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-5' } },
 			}
 		}
 	}

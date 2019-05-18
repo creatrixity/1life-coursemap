@@ -80,6 +80,7 @@ export class LessonPage extends React.Component<IHomePage.IProps, IHomePage.ISta
 			lessonId: lessonId,
 			lessonsCount: moduleLessonsCount,
 			moduleId,
+			courseId: this.currentCourse.id,
 			userId: user.id,
 			progression: 100
 		}, (lessons:any) => {

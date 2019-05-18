@@ -192,7 +192,7 @@ function setUser (response:any) {
  * @param {Object} response
  */
 function errorHandler (dispatch:Dispatch, e:any) {
-  alert('Sorry, we encountered an error trying to process your request. Please try again.');
+  console.log('Sorry, we encountered an error trying to process your request. Please try again.');
 
   dispatch(AppActions.Map({
     hasRequestError: true

@@ -4,6 +4,8 @@ import * as React from 'react';
 import { debounce } from 'lodash';
 
 import LoadSpinner from '@Components/LoadSpinner'
+import { StarIcon } from '@Components/Icons'
+import Rating from 'react-rating';
 
 type onSaveJournalInputArgs = {
   value: string,
@@ -42,19 +44,46 @@ export class JournalInput extends React.Component<JournalInputProps, JournalInpu
   constructor (props: JournalInputProps) {
     super(props)
     this.handleJournalInputChange = this.handleJournalInputChange.bind(this)
-    this._makeRequest = debounce(this._makeRequest, 1000)
+    this.handleJournalRatingChange = this.handleJournalRatingChange.bind(this)
+    this._makeRequest = debounce(this._makeRequest, 5000)
   }
 
   componentDidMount() {
-    const { value } = this.props;
+    const { value, type } = this.props;
+
+    let val = value === '' && type === 'rating' ? '0' : value
 
     this.setState({
-      value
+      value: val
     })
+  }
+
+  renderRating(label:string, value:string):React.ReactNode {
+    return (
+      <div className={'d-flex'}>
+        <section style={{ width: '70%' }} className={'mr-1'}>{label}</section>
+        <section style={{ width: '30%' }}>
+          <Rating
+            initialRating={parseInt(value)}
+            emptySymbol={<StarIcon />}
+            fullSymbol={<StarIcon fill="yellow" />}
+            onChange={this.handleJournalRatingChange}
+          />
+        </section>
+      </div>
+    )
+  }
+
+  handleJournalRatingChange(rate:number) {
+    const value = `${rate}`;
+
+    this.setState({ value })
+    this._makeRequest(value)
   }
 
   handleJournalInputChange(e:React.ChangeEvent<(HTMLTextAreaElement|HTMLInputElement)>):void {
     const { type, value } = e.currentTarget;
+
     let newValue;
 
     if (type === 'checkbox') {
@@ -76,6 +105,8 @@ export class JournalInput extends React.Component<JournalInputProps, JournalInpu
   }
 
   _makeRequest(value:string) {
+    if (!value || !value.length) return;
+    
     const { onSaveJournalInput, tag, label } = this.props;
 
     this._toggleSavingState()
@@ -94,13 +125,16 @@ export class JournalInput extends React.Component<JournalInputProps, JournalInpu
       showLabel
     } = this.props;
     const { isSavingInput, value } = this.state;
+
+    if (type === 'rating') return this.renderRating(label, value);
+
     const remainingInputProps = {
       onChange: this.handleJournalInputChange,
       name: name
     };
     const inputTypes:{ [type: string]: any } = {
       'input': <input value={value} {...remainingInputProps} className={'form-control-line w-100'} />,
-      'textarea': <textarea value={value} placeholder={'Please fill this'} {...remainingInputProps} className={'form-control d-block w-100'} />,
+      'textarea': <textarea value={value} placeholder={'Start writing...'} {...remainingInputProps} className={'form-control d-block w-100'} />,
       'checkbox': <input type="checkbox" id={`journal-checkbox-${tag}`} value={value} checked={value === 'on'} {...remainingInputProps} className={'styled-checkbox'} />,
     }
     
@@ -112,8 +146,8 @@ export class JournalInput extends React.Component<JournalInputProps, JournalInpu
           {isSavingInput && <LoadSpinner width={'16px'} height={'16px'} color={'#77b02a'} />}
         </label>}
         {inputTypes[type]}
-        {(showLabel && type === 'checkbox') && <label htmlFor={`journal-checkbox-${tag}`}>{label}</label>}        
+        {(showLabel && type === 'checkbox') && <label htmlFor={`journal-checkbox-${tag}`}>{label}</label>}
       </div>
-    )    
+    )
   }
 }
