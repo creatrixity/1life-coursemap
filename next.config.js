@@ -110,6 +110,18 @@ module.exports = withPlugins(
 				'/courses/my-1life-roadmap-journal/first-quarter/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-3' } },
 				'/courses/my-1life-roadmap-journal/first-quarter/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-4' } },
 				'/courses/my-1life-roadmap-journal/first-quarter/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-5' } },
+				'/courses/my-1life-roadmap-journal/first-quarter/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-6' } },
+				'/courses/my-1life-roadmap-journal/first-quarter/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-7' } },
+				'/courses/my-1life-roadmap-journal/first-quarter/lesson-8/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-8' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/index.html': { page: '/coursemap/module', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-1' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-2' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-3' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-4' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-5' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-6' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-7' } },
+				'/courses/my-1life-roadmap-journal/second-quarter/lesson-8/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-8' } },
 			}
 		}
 	}

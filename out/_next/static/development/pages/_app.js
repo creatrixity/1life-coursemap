@@ -15909,109 +15909,16 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./src/Definations/ActionConsts.ts":
-/*!*****************************************!*\
-  !*** ./src/Definations/ActionConsts.ts ***!
-  \*****************************************/
-/*! exports provided: ActionConsts */
+/***/ "./src/Data/CourseMapModules.tsx":
+/*!***************************************!*\
+  !*** ./src/Data/CourseMapModules.tsx ***!
+  \***************************************/
+/*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ActionConsts", function() { return ActionConsts; });
-var ActionConsts = {
-  Home: {
-    ResetReducer: 'Home_ResetReducer',
-    SetReducer: 'Home_SetReducer'
-  },
-  App: {
-    ResetReducer: 'App_ResetReducer',
-    SetReducer: 'App_SetReducer'
-  },
-  User: {
-    ResetReducer: 'User_ResetReducer',
-    SetReducer: 'User_SetReducer'
-  }
-};
-
-/***/ }),
-
-/***/ "./src/Definations/index.ts":
-/*!**********************************!*\
-  !*** ./src/Definations/index.ts ***!
-  \**********************************/
-/*! exports provided: ActionConsts */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _ActionConsts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ActionConsts */ "./src/Definations/ActionConsts.ts");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ActionConsts", function() { return _ActionConsts__WEBPACK_IMPORTED_MODULE_0__["ActionConsts"]; });
-
-
-
-/***/ }),
-
-/***/ "./src/Helpers/index.ts":
-/*!******************************!*\
-  !*** ./src/Helpers/index.ts ***!
-  \******************************/
-/*! exports provided: computeModulesProgression, findRoutePathDepth */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeModulesProgression", function() { return computeModulesProgression; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "findRoutePathDepth", function() { return findRoutePathDepth; });
-
-/**
- * Returns the depth of a route path string.
- * 
- * @param {String} routePathString - The path string to resolve.
- * @returns Number;
- */
-
-function findRoutePathDepth(routePathString) {
-  return routePathString.split('/').filter(function (pathFragment) {
-    return pathFragment !== '';
-  }).length;
-}
-/**
- * Calculates the level of progression within a module.
- * 
- * @param {Array<Object>} lessons 
- * @param {Number} lessonsCount 
- */
-
-
-function computeModulesProgression(lessons, lessonsCount) {
-  var totalProgressions = lessons.reduce(function (previousTotalProgression, currentLesson) {
-    return previousTotalProgression + currentLesson.progression;
-  }, 0);
-  return totalProgressions / lessonsCount;
-}
-
-
-
-/***/ }),
-
-/***/ "./src/Redux/Reducers/app.ts":
-/*!***********************************!*\
-  !*** ./src/Redux/Reducers/app.ts ***!
-  \***********************************/
-/*! exports provided: AppReducer */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "AppReducer", function() { return AppReducer; });
-/* harmony import */ var _Definations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../Definations */ "./src/Definations/index.ts");
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-
-var coursemapModules = {
+/* harmony default export */ __webpack_exports__["default"] = ({
   '1life-digital-academy': {
     "title": "1 Life Digital Academy",
     "id": 1,
@@ -16233,7 +16140,7 @@ var coursemapModules = {
       "first-quarter": {
         "id": 8,
         "title": "First Quarter",
-        "nextModule": null,
+        "nextModule": 'second-quarter',
         "lessons": {
           "1": {
             "title": "My Dream 4 Me",
@@ -16254,22 +16161,180 @@ var coursemapModules = {
           "5": {
             "title": "Develop My Fulfilling Future",
             "type": "lesson"
+          },
+          "6": {
+            "title": "The 1Life Fulfilment Triangle",
+            "type": "lesson"
+          },
+          "7": {
+            "title": "Healthy in My Mind, Body and Spirit",
+            "type": "lesson"
+          },
+          "8": {
+            "title": "Going Inside The Engine",
+            "type": "lesson"
+          }
+        }
+      },
+      "second-quarter": {
+        "id": 9,
+        "title": "Second Quarter",
+        "nextModule": null,
+        "lessons": {
+          "1": {
+            "title": "My Dream 4 Me",
+            "type": "lesson"
+          },
+          "2": {
+            "title": "Vision Planning: My Dream 4 Me",
+            "type": "lesson"
+          },
+          "3": {
+            "title": "Who is my tribe?",
+            "type": "lesson"
+          },
+          "4": {
+            "title": "Thriving in my environment",
+            "type": "lesson"
+          },
+          "5": {
+            "title": "Funding My Magnificent Future",
+            "type": "lesson"
+          },
+          "6": {
+            "title": "My 1Life Finance ABCs",
+            "type": "lesson"
+          },
+          "7": {
+            "title": "Healthy In My Mind, Body and Spirit",
+            "type": "lesson"
+          },
+          "8": {
+            "title": "Fueling my Future",
+            "type": "lesson"
           }
         }
       }
     }
   }
-  /**
-   * INITIAL_STATE
-  */
+});
 
+/***/ }),
+
+/***/ "./src/Definations/ActionConsts.ts":
+/*!*****************************************!*\
+  !*** ./src/Definations/ActionConsts.ts ***!
+  \*****************************************/
+/*! exports provided: ActionConsts */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ActionConsts", function() { return ActionConsts; });
+var ActionConsts = {
+  Home: {
+    ResetReducer: 'Home_ResetReducer',
+    SetReducer: 'Home_SetReducer'
+  },
+  App: {
+    ResetReducer: 'App_ResetReducer',
+    SetReducer: 'App_SetReducer'
+  },
+  User: {
+    ResetReducer: 'User_ResetReducer',
+    SetReducer: 'User_SetReducer'
+  }
 };
+
+/***/ }),
+
+/***/ "./src/Definations/index.ts":
+/*!**********************************!*\
+  !*** ./src/Definations/index.ts ***!
+  \**********************************/
+/*! exports provided: ActionConsts */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _ActionConsts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ActionConsts */ "./src/Definations/ActionConsts.ts");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ActionConsts", function() { return _ActionConsts__WEBPACK_IMPORTED_MODULE_0__["ActionConsts"]; });
+
+
+
+/***/ }),
+
+/***/ "./src/Helpers/index.ts":
+/*!******************************!*\
+  !*** ./src/Helpers/index.ts ***!
+  \******************************/
+/*! exports provided: computeModulesProgression, findRoutePathDepth */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeModulesProgression", function() { return computeModulesProgression; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "findRoutePathDepth", function() { return findRoutePathDepth; });
+
+/**
+ * Returns the depth of a route path string.
+ * 
+ * @param {String} routePathString - The path string to resolve.
+ * @returns Number;
+ */
+
+function findRoutePathDepth(routePathString) {
+  return routePathString.split('/').filter(function (pathFragment) {
+    return pathFragment !== '';
+  }).length;
+}
+/**
+ * Calculates the level of progression within a module.
+ * 
+ * @param {Array<Object>} lessons 
+ * @param {Number} lessonsCount 
+ */
+
+
+function computeModulesProgression(lessons, lessonsCount) {
+  var totalProgressions = lessons.reduce(function (previousTotalProgression, currentLesson) {
+    return previousTotalProgression + currentLesson.progression;
+  }, 0);
+  return totalProgressions / lessonsCount;
+}
+
+
+
+/***/ }),
+
+/***/ "./src/Redux/Reducers/app.ts":
+/*!***********************************!*\
+  !*** ./src/Redux/Reducers/app.ts ***!
+  \***********************************/
+/*! exports provided: AppReducer */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "AppReducer", function() { return AppReducer; });
+/* harmony import */ var _Definations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../Definations */ "./src/Definations/index.ts");
+/* harmony import */ var _Data_CourseMapModules__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../Data/CourseMapModules */ "./src/Data/CourseMapModules.tsx");
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+
+/**
+ * INITIAL_STATE
+*/
+
 var INITIAL_STATE = {
   prevPathDepth: 0,
   hasRequestError: false,
   isUpdatingUserLesson: false,
   isFetchingRoadmapModules: false,
-  coursemapModules: coursemapModules,
+  coursemapModules: _Data_CourseMapModules__WEBPACK_IMPORTED_MODULE_1__["default"],
   coursemapModulesContent: {},
   coursemapModulesFeedback: {}
 };
