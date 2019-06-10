@@ -176,10 +176,11 @@ export class LessonPage extends React.Component<IHomePage.IProps, IHomePage.ISta
 		);
 	}
 
-	handleSaveJournalInput({ question, value, tag }: { value:string, question:string, tag: number }, callback:() => any) {
+	handleSaveJournalInput({ question, type, value, tag }: { value:string, question:string, tag: number, type: string }, callback:() => any) {
 		this.props.createJournalFeedback({
-			question: question,
+			question,
 			answer: value,
+			type,
 			user_id: getUser().id,
 			course_id: this.currentCourse.id,
 			module_id: this.currentCourseModule['id'],

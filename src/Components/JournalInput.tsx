@@ -9,6 +9,7 @@ import Rating from 'react-rating';
 
 type onSaveJournalInputArgs = {
   value: string,
+  type: string,
   question: string,
   tag: number
 }
@@ -107,11 +108,11 @@ export class JournalInput extends React.Component<JournalInputProps, JournalInpu
   _makeRequest(value:string) {
     if (!value || !value.length) return;
     
-    const { onSaveJournalInput, tag, label } = this.props;
+    const { onSaveJournalInput, tag, label, type } = this.props;
 
     this._toggleSavingState()
 
-    onSaveJournalInput({ value, tag, question: label }, () => {
+    onSaveJournalInput({ value, tag, question: label, type }, () => {
       this._toggleSavingState()
     })
   }
