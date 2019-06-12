@@ -36,7 +36,8 @@ export class LessonPage extends React.Component<IHomePage.IProps, IHomePage.ISta
 		super(props);
 
 		this.state = {
-			moduleProgression: 0
+			moduleProgression: 0,
+			ratingCumulative: 0
 		}
 
 		this.handleSaveJournalInput = this.handleSaveJournalInput.bind(this);
@@ -91,11 +92,39 @@ export class LessonPage extends React.Component<IHomePage.IProps, IHomePage.ISta
 			})
 		});
 
+		this.refreshFeedback({
+			userId: user.id,
+			courseId: currentCourse.id,
+			moduleId: currentCourseModule.id,
+			lessonId
+		})
+	}
+
+	refreshFeedback({
+		userId,
+		courseId,
+		moduleId,
+		lessonId
+	}:any) {
 		this.props.getJournalFeedback({
-			user_id: user.id,
-			course_id: currentCourse.id,
-			module_id: currentCourseModule.id,
+			user_id: userId,
+			course_id: courseId,
+			module_id: moduleId,
 			lesson_id: lessonId,
+		}, (feedback:any) => {
+			let feedbackData = feedback[courseId][moduleId][lessonId]
+
+			let feedbackDataKeys = Object.keys(feedbackData).filter((key:any) => {
+				return feedbackData[key].type === 'rating'
+			})
+
+			const ratingCumulative = feedbackDataKeys.reduce((previousValue:any, currentValue:any, currentIndex:any) => {
+				return parseInt(previousValue) + parseInt(feedbackData[feedbackDataKeys[currentIndex]].answer);
+			}, 0)
+
+			this.setState({
+				ratingCumulative
+			})
 		})
 	}
 
@@ -186,7 +215,14 @@ export class LessonPage extends React.Component<IHomePage.IProps, IHomePage.ISta
 			module_id: this.currentCourseModule['id'],
 			lesson_id: this.lessonId,
 			feedback_id: tag
-		}, callback)
+		}, () => {
+			this.refreshFeedback({
+				userId: getUser().id,
+				courseId: this.currentCourse.id,
+				moduleId: this.currentCourseModule.id,
+				lessonId: this.lessonId
+			})	
+		})
 	}
 
 	public render(): JSX.Element {
@@ -201,6 +237,22 @@ export class LessonPage extends React.Component<IHomePage.IProps, IHomePage.ISta
 		const content = convert(lessonContent, {
 				transform: {
 					reactplayer: (props:any) => <ReactPlayer url={props.url} width={'100%'} light playing />,
+					ratingfeedback: (props:any) => {
+						const { displaythreshold } = props;
+						const { ratingCumulative = 0 } = this.state;
+
+						const [rangeStart, rangeEnd] = displaythreshold.split(':')
+
+						if (
+							ratingCumulative &&
+							ratingCumulative >= parseInt(rangeStart) &&
+							ratingCumulative <= parseInt(rangeEnd)
+						) {
+							return props.children
+						}
+
+						return null;
+					},
 					journalinput: (props:any) => {
 						const tag = parseInt(props.tag);
 						const value = journalInputValue && journalInputValue.hasOwnProperty(tag) ? journalInputValue[tag].answer: '';

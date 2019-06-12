@@ -31210,7 +31210,7 @@ var AppActions = {
       });
     };
   },
-  getJournalFeedback: function getJournalFeedback(payload) {
+  getJournalFeedback: function getJournalFeedback(payload, callback) {
     var course_id = payload.course_id,
         module_id = payload.module_id,
         lesson_id = payload.lesson_id;
@@ -31224,6 +31224,7 @@ var AppActions = {
         dispatch(AppActions.Map({
           coursemapModulesFeedback: _objectSpread({}, getState().app.coursemapModulesFeedback, newCoursemapModuleFeedback)
         }));
+        callback(_objectSpread({}, getState().app.coursemapModulesFeedback, newCoursemapModuleFeedback));
       }).catch(function () {
         return api.errorHandler(dispatch);
       });
@@ -31990,14 +31991,16 @@ function (_React$Component) {
       var _this$props2 = this.props,
           onSaveJournalInput = _this$props2.onSaveJournalInput,
           tag = _this$props2.tag,
-          label = _this$props2.label;
+          label = _this$props2.label,
+          type = _this$props2.type;
 
       this._toggleSavingState();
 
       onSaveJournalInput({
         value: value,
         tag: tag,
-        question: label
+        question: label,
+        type: type
       }, function () {
         _this2._toggleSavingState();
       });
@@ -32341,7 +32344,7 @@ function getModulesData() {
 
 /***/ }),
 
-/***/ 7:
+/***/ 11:
 /*!************************************************!*\
   !*** multi ./pages/coursemap/module/index.tsx ***!
   \************************************************/
@@ -32366,5 +32369,5 @@ module.exports = dll_e8427f5b250f425a56e7;
 
 /***/ })
 
-},[[7,"static/runtime/webpack.js","styles"]]]));;
+},[[11,"static/runtime/webpack.js","styles"]]]));;
 //# sourceMappingURL=module.js.map

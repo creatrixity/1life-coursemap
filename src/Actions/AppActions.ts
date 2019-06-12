@@ -32,7 +32,7 @@ export const AppActions = {
     })
   },
 
-  getJournalFeedback : (payload:any) => {
+  getJournalFeedback : (payload:any, callback:Function) => {
     const { course_id, module_id, lesson_id } = payload;
 
     return ((dispatch:Dispatch, getState:any, api:any) => {			
@@ -56,6 +56,11 @@ export const AppActions = {
               ...newCoursemapModuleFeedback
             }
           }))
+
+          callback({
+            ...getState().app.coursemapModulesFeedback,
+            ...newCoursemapModuleFeedback
+          })
         })
         .catch(() => api.errorHandler(dispatch))
     })

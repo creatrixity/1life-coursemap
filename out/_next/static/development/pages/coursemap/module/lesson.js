@@ -34764,6 +34764,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _src_Helpers_index__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../../../../src/Helpers/index */ "./src/Helpers/index.ts");
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -34827,7 +34835,8 @@ function (_React$Component) {
     _defineProperty(_assertThisInitialized(_assertThisInitialized(_this)), "moduleTitle", null);
 
     _this.state = {
-      moduleProgression: 0
+      moduleProgression: 0,
+      ratingCumulative: 0
     };
     _this.handleSaveJournalInput = _this.handleSaveJournalInput.bind(_assertThisInitialized(_assertThisInitialized(_this)));
     return _this;
@@ -34883,11 +34892,39 @@ function (_React$Component) {
           moduleProgression: moduleProgression
         });
       });
+      this.refreshFeedback({
+        userId: user.id,
+        courseId: currentCourse.id,
+        moduleId: currentCourseModule.id,
+        lessonId: lessonId
+      });
+    }
+  }, {
+    key: "refreshFeedback",
+    value: function refreshFeedback(_ref) {
+      var _this3 = this;
+
+      var userId = _ref.userId,
+          courseId = _ref.courseId,
+          moduleId = _ref.moduleId,
+          lessonId = _ref.lessonId;
       this.props.getJournalFeedback({
-        user_id: user.id,
-        course_id: currentCourse.id,
-        module_id: currentCourseModule.id,
+        user_id: userId,
+        course_id: courseId,
+        module_id: moduleId,
         lesson_id: lessonId
+      }, function (feedback) {
+        var feedbackData = feedback[courseId][moduleId][lessonId];
+        var feedbackDataKeys = Object.keys(feedbackData).filter(function (key) {
+          return feedbackData[key].type === 'rating';
+        });
+        var ratingCumulative = feedbackDataKeys.reduce(function (previousValue, currentValue, currentIndex) {
+          return parseInt(previousValue) + parseInt(feedbackData[feedbackDataKeys[currentIndex]].answer);
+        }, 0);
+
+        _this3.setState({
+          ratingCumulative: ratingCumulative
+        });
       });
     }
   }, {
@@ -34897,9 +34934,9 @@ function (_React$Component) {
     }
   }, {
     key: "renderModuleCardLink",
-    value: function renderModuleCardLink(_ref) {
-      var icon = _ref.icon,
-          title = _ref.title;
+    value: function renderModuleCardLink(_ref2) {
+      var icon = _ref2.icon,
+          title = _ref2.title;
       var Icon = icon;
       return react__WEBPACK_IMPORTED_MODULE_0__["createElement"]("div", {
         className: 'card d-flex flex-row module__link-card'
@@ -34956,24 +34993,35 @@ function (_React$Component) {
     }
   }, {
     key: "handleSaveJournalInput",
-    value: function handleSaveJournalInput(_ref2, callback) {
-      var question = _ref2.question,
-          value = _ref2.value,
-          tag = _ref2.tag;
+    value: function handleSaveJournalInput(_ref3, callback) {
+      var _this4 = this;
+
+      var question = _ref3.question,
+          type = _ref3.type,
+          value = _ref3.value,
+          tag = _ref3.tag;
       this.props.createJournalFeedback({
         question: question,
         answer: value,
+        type: type,
         user_id: Object(_src_Redux_utils__WEBPACK_IMPORTED_MODULE_12__["getUser"])().id,
         course_id: this.currentCourse.id,
         module_id: this.currentCourseModule['id'],
         lesson_id: this.lessonId,
         feedback_id: tag
-      }, callback);
+      }, function () {
+        _this4.refreshFeedback({
+          userId: Object(_src_Redux_utils__WEBPACK_IMPORTED_MODULE_12__["getUser"])().id,
+          courseId: _this4.currentCourse.id,
+          moduleId: _this4.currentCourseModule.id,
+          lessonId: _this4.lessonId
+        });
+      });
     }
   }, {
     key: "render",
     value: function render() {
-      var _this3 = this;
+      var _this5 = this;
 
       var _this$props$app = this.props.app,
           coursemapModulesContent = _this$props$app.coursemapModulesContent,
@@ -34992,11 +35040,27 @@ function (_React$Component) {
               playing: true
             });
           },
+          ratingfeedback: function ratingfeedback(props) {
+            var displaythreshold = props.displaythreshold;
+            var _this5$state$ratingCu = _this5.state.ratingCumulative,
+                ratingCumulative = _this5$state$ratingCu === void 0 ? 0 : _this5$state$ratingCu;
+
+            var _displaythreshold$spl = displaythreshold.split(':'),
+                _displaythreshold$spl2 = _slicedToArray(_displaythreshold$spl, 2),
+                rangeStart = _displaythreshold$spl2[0],
+                rangeEnd = _displaythreshold$spl2[1];
+
+            if (ratingCumulative && ratingCumulative >= parseInt(rangeStart) && ratingCumulative <= parseInt(rangeEnd)) {
+              return props.children;
+            }
+
+            return null;
+          },
           journalinput: function journalinput(props) {
             var tag = parseInt(props.tag);
             var value = journalInputValue && journalInputValue.hasOwnProperty(tag) ? journalInputValue[tag].answer : '';
             return react__WEBPACK_IMPORTED_MODULE_0__["createElement"](_src_Components__WEBPACK_IMPORTED_MODULE_7__["JournalInput"], {
-              onSaveJournalInput: _this3.handleSaveJournalInput,
+              onSaveJournalInput: _this5.handleSaveJournalInput,
               tag: tag,
               type: props.type || 'textarea',
               name: props.name,
@@ -35125,7 +35189,7 @@ var AppActions = {
       });
     };
   },
-  getJournalFeedback: function getJournalFeedback(payload) {
+  getJournalFeedback: function getJournalFeedback(payload, callback) {
     var course_id = payload.course_id,
         module_id = payload.module_id,
         lesson_id = payload.lesson_id;
@@ -35139,6 +35203,7 @@ var AppActions = {
         dispatch(AppActions.Map({
           coursemapModulesFeedback: _objectSpread({}, getState().app.coursemapModulesFeedback, newCoursemapModuleFeedback)
         }));
+        callback(_objectSpread({}, getState().app.coursemapModulesFeedback, newCoursemapModuleFeedback));
       }).catch(function () {
         return api.errorHandler(dispatch);
       });
@@ -35905,14 +35970,16 @@ function (_React$Component) {
       var _this$props2 = this.props,
           onSaveJournalInput = _this$props2.onSaveJournalInput,
           tag = _this$props2.tag,
-          label = _this$props2.label;
+          label = _this$props2.label,
+          type = _this$props2.type;
 
       this._toggleSavingState();
 
       onSaveJournalInput({
         value: value,
         tag: tag,
-        question: label
+        question: label,
+        type: type
       }, function () {
         _this2._toggleSavingState();
       });
@@ -36256,7 +36323,7 @@ function getModulesData() {
 
 /***/ }),
 
-/***/ 3:
+/***/ 14:
 /*!*******************************************************!*\
   !*** multi ./pages/coursemap/module/lesson/index.tsx ***!
   \*******************************************************/
@@ -36281,5 +36348,5 @@ module.exports = dll_e8427f5b250f425a56e7;
 
 /***/ })
 
-},[[3,"static/runtime/webpack.js","styles"]]]));;
+},[[14,"static/runtime/webpack.js","styles"]]]));;
 //# sourceMappingURL=lesson.js.map

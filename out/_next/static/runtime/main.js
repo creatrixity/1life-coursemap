@@ -5740,7 +5740,7 @@ function connect(options) {
       error.name = err.name;
       error.stack = err.stack; // __NEXT_DIST_DIR is provided by webpack
 
-      (0, _sourceMapSupport.rewriteStacktrace)(error, "C:\\Users\\hp\\Documents\\1life-coursemap\\.next");
+      (0, _sourceMapSupport.rewriteStacktrace)(error, "c:\\Users\\hp\\Documents\\1life-coursemap\\.next");
       return error;
     }
   };
@@ -18175,8 +18175,8 @@ module.exports = function(module) {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! C:\Users\hp\Documents\1life-coursemap\node_modules\next-env\src\injectVars.js */"./node_modules/next-env/src/injectVars.js");
-module.exports = __webpack_require__(/*! C:\Users\hp\Documents\1life-coursemap\node_modules\next\dist\client\next-dev */"./node_modules/next/dist/client/next-dev.js");
+__webpack_require__(/*! c:\Users\hp\Documents\1life-coursemap\node_modules\next-env\src\injectVars.js */"./node_modules/next-env/src/injectVars.js");
+module.exports = __webpack_require__(/*! c:\Users\hp\Documents\1life-coursemap\node_modules\next\dist\client\next-dev */"./node_modules/next/dist/client/next-dev.js");
 
 
 /***/ }),

@@ -7,6 +7,7 @@ declare module IHomePage {
 
 	export interface IState {
 		moduleProgression?: number
+		ratingCumulative?: number
 		name?: string
 		email?: string
 		uid?: string
