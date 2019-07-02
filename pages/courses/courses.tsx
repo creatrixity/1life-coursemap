@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { IHomePage, IStore } from '@Interfaces';
 import { AppActions } from '@Actions';
 import { ArrowRightIcon } from '@Components/Icons';
+import { Nav } from '@Components/Nav';
 import {
 	getToken
 } from '@Redux/utils'
@@ -38,15 +39,7 @@ export class CoursesPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 				<Head>
 					<title>Choose a Course | 1Life</title>
 				</Head>
-				<section className="container">
-					<div className="row">
-						<nav className={'navbar navbar-light bg-white mb-4'}>
-							<span className={'navbar-brand mb-0 h1'}>
-								<img className={'img'} width={50} src={'/static/img/splashLogo.webp'} alt=""/>
-							</span>
-						</nav>
-					</div>
-				</section>
+				<Nav />
 
 				<section className="container">
 					<div className="row pb-4">

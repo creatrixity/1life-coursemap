@@ -1,0 +1,16 @@
+$brand-color: #77B02A;
+
+.module-bar {
+  height: 80px;
+  background: $brand-color;
+
+  &__title {
+    font-size: 18px;
+    font-weight: 500;
+    color: white;
+  }
+
+  &--lesson {
+    margin-bottom: 35px;
+  }
+}
