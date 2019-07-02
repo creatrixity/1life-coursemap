@@ -25,21 +25,26 @@ export class ProfilePage extends React.Component<IProfilePage.IProps, IProfilePa
 	componentDidMount() {
 		if (!getToken()) return this.props.router.push('/login')
 
+		if (getUser()) {
+			this.getUserCourses(1)
+			this.getUserCourses(2)
+		}
+	}
+
+	getUserCourses(courseId:number) {
 		const user = getUser();
 
-		if (user) {
-			this.props.getUserModules({
-				userId: user.id,
-				courseId: 2
-			}, (userModules:any) => {
-				this.setState(({ userCourseModules }) => ({
-					userCourseModules: {
-						...userCourseModules,
-						2: userModules
-					}
-				}))
-			})
-		}
+		this.props.getUserModules({
+			userId: user.id,
+			courseId
+		}, (userModules:any) => {
+			this.setState(({ userCourseModules }) => ({
+				userCourseModules: {
+					...userCourseModules,
+					[courseId]: userModules
+				}
+			}))
+		})	
 	}
 
 	computeModuleProgression({
@@ -48,12 +53,12 @@ export class ProfilePage extends React.Component<IProfilePage.IProps, IProfilePa
 	}: { courseId: number, moduleId: number }) {
 		const { userCourseModules } = this.state;
 
-		const getModule= () => {
+		const getProgression= () => {
 			return userCourseModules[courseId]
-							.filter((module:any) => module.module_id === moduleId)[0]
+							.filter((module:any) => module.module_id === moduleId)[0].progression
 		}
 
-		return courseId in userCourseModules ? getModule().progression: 0
+		return courseId in userCourseModules ? getProgression(): 0
 	}
 
 	public render(): JSX.Element {
