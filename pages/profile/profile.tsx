@@ -53,9 +53,11 @@ export class ProfilePage extends React.Component<IProfilePage.IProps, IProfilePa
 	}: { courseId: number, moduleId: number }) {
 		const { userCourseModules } = this.state;
 
-		const getProgression= () => {
-			return userCourseModules[courseId]
-							.filter((module:any) => module.module_id === moduleId)[0].progression
+		const getProgression = () => {
+			const res = userCourseModules[courseId]
+							.filter((module:any) => module.module_id === moduleId)
+							
+			return  res.length ? res[0].progression: 0;
 		}
 
 		return courseId in userCourseModules ? getProgression(): 0
