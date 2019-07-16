@@ -1,10 +1,15 @@
-const withPlugins = require('next-compose-plugins');
+'use strict';
 
 const withTypescript = require('@zeit/next-typescript')
 const withCSS = require('@zeit/next-css')
 const withSass = require('@zeit/next-sass');
 const withBundleAnalyzer = require("@zeit/next-bundle-analyzer");
+const withOffline = require('next-offline')
+
+const withPlugins = require('next-compose-plugins');
 const nextEnv = require('next-env');
+const WebpackPwaManifest = require('webpack-pwa-manifest');
+const path = require('path');
 const dotenvLoad = require('dotenv-load');
 
 const { ENV } = process.env
@@ -27,10 +32,45 @@ module.exports = withPlugins(
 		[withTypescript],
 		[withCSS],
 		[withSass],
+		[withOffline],
 		[withBundleAnalyzer],
 		[nextEnv()]
 	],
 	{
+		webpack: (config, { isServer, buildId, dev }) => {
+			if (!isServer && !dev) {
+				config.plugins.push(
+					new WebpackPwaManifest({
+						filename: 'static/manifest.json',
+						name: '1Life Coursemap',
+						short_name: '1Life Coursemap',
+						description: 'A companion reader for the 1Life courses',
+						background_color: '#ffffff',
+						theme_color: '#5755d9',
+						display: 'standalone',
+						orientation: 'portrait',
+						fingerprints: false,
+						inject: false,
+						start_url: '/',
+						ios: {
+							'apple-mobile-web-app-title': '1Life Coursemap',
+							'apple-mobile-web-app-status-bar-style': '#5755d9',
+						},
+						icons: [
+							{
+								src: path.resolve('static/favicon.ico'),
+								sizes: [96, 128, 192, 256, 384, 512],
+								destination: '/static',
+							},
+						],
+						includeDirectory: true,
+						publicPath: '..',
+					})
+				);
+			}
+	
+			return config;	
+		},
 		publicRuntimeConfig: {
 			envSpecifics
 		},

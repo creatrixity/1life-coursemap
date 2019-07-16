@@ -1,6 +1,6 @@
 const express = require('express');
 const next = require('next');
-const path = require("path");
+const path = require('path');
 const devProxy = './proxy.js';
 
 const PORT = process.env.PORT || 3000;
@@ -26,8 +26,16 @@ app.prepare()
 				server.use(proxyMiddleware(context, devProxy[context]))
 			})
         }
-        
+
 		server.get('*', (req, res) => {
+			const pathname = req.originalUrl;
+
+			if (pathname === '/service-worker.js') {
+				const filePath = path.join(__dirname, '.next', pathname)
+
+				app.serveStatic(req, res, filePath)		
+			}
+
 			return handler(req, res)
 		})
 
