@@ -1,0 +1,21 @@
+{
+  "name": "1Life Coursemap",
+  "short_name": "1Life App",
+  "theme_color": "#77b02a",
+  "background_color": "#77b02a",
+  "icons": [
+    {
+      "src": "/static/pwa-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/static/icons-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "display": "fullscreen",
+  "scope": "/",
+  "start_url": "/?source=pwa"
+}
