@@ -1,12 +1,9 @@
-import { normalize, schema } from 'normalizr';
+import { normalize } from 'normalizr';
 
 import { Dispatch } from 'redux';
 import { ActionConsts } from "@Definations";
 
-const feedbackSchema = new schema.Entity('feedback', {}, {
-  idAttribute: 'feedback_id'
-});
-
+import { feedbackSchema } from '@Redux/schema'
 /**
  * ACTIONS
 */

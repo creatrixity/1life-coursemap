@@ -9,8 +9,9 @@ import store from '@Redux/store';
 
 import { IApp } from '@Interfaces';
 import {
+    AppActions,
+    CourseActions,
     UserActions,
-    AppActions
 } from '@Actions';
 
 import { findRoutePathDepth } from '../src/Helpers';

@@ -6,10 +6,15 @@ import Link from 'next/link';
 
 import { IHomePage, IStore } from '@Interfaces';
 import { HomeActions } from '@Actions';
+import { getToken } from '@Redux/utils';
 
 import './home.scss';
 
 export class HomePage extends React.Component<IHomePage.IProps, IHomePage.IState> {
+	componentDidMount () {
+		if (getToken()) return this.props.router.push('/courses')
+	}
+
 	public render(): JSX.Element {
 		return (
 			<div className="d-flex flex-column splash-screen">
@@ -29,10 +34,6 @@ export class HomePage extends React.Component<IHomePage.IProps, IHomePage.IState
 							<a className="btn btn-block btn-dark splash-screen__cta">
 								Get Started
 							</a>
-						</Link>
-
-						<Link href={'/roadmap'}>
-							<a className="btn btn-block btn-outline-light splash-screen__cta">See Roadmap Outline</a>
 						</Link>
 					</div>
 				</section>

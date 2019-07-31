@@ -26,6 +26,9 @@
 			"@Components": [
 				"./src/Components"
 			],
+			"@Helpers": [
+				"./src/Helpers"
+			],
 			"@Interfaces": [
 				"./src/Interfaces"
 			],
@@ -34,6 +37,9 @@
 			],
 			"@Definations": [
 				"./src/Definations"
+			],
+			"@Selectors": [
+				"./src/Selectors"
 			],
 			"@Reducers": [
 				"./src/Redux/Reducers"

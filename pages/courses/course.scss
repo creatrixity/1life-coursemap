@@ -10,28 +10,28 @@ $brand-color: #77B02A;
   padding: 4rem 0;
   border-color: $brand-color;
   background: #fafafa;
+}
 
-  &--active {
-    background: $brand-color;
+.card.coursemap-listing--active {
+  background: $brand-color;
 
-    .coursemap-listing__title {
-      color: white;
-    }
+  .coursemap-listing__title {
+    color: white;
+  }
 
-    .coursemap-listing__subtext {
-      color: lighten($brand-color, 45%);
-    }
-  
-    .coursemap-listing__number {
-      border: 1px solid white;
-      color: white;
-    }
+  .coursemap-listing__subtext {
+    color: lighten($brand-color, 45%);
+  }
 
-    .coursemap-listing__btn {
-      border-color: darken($brand-color, 20%);
-      background: darken($brand-color, 20%);
-      padding: 0.5rem 2rem;
-    }
+  .coursemap-listing__number {
+    border: 1px solid white;
+    color: white;
+  }
+
+  .coursemap-listing__btn {
+    border-color: darken($brand-color, 20%);
+    background: darken($brand-color, 20%);
+    padding: 0.5rem 2rem;
   }
 }
 

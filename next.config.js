@@ -27,6 +27,49 @@ const envSpecifics = {
   },
 }[env];
 
+const workboxOpts = {
+	runtimeCaching: [
+		{
+			urlPattern: '/',
+			handler: 'NetworkFirst',
+			options: {
+				cacheableResponse: {
+					status: [0, 200]
+				}
+			}
+		},
+		{
+			urlPattern: /.*\.(?:png|jpg|jpeg|svg|gif)/,
+			handler: 'CacheFirst',
+			options: {
+				cacheName: 'image-cache',
+				cacheableResponse: {
+					status: [0, 200]
+				}
+			}
+		},
+		{
+			urlPattern: /.*\.(?:css|js)/,
+			handler: 'NetworkFirst',
+			options: {
+				cacheName: 'assets-cache',
+				cacheableResponse: {
+					status: [0, 200]
+				}
+			}
+		},
+		{
+			urlPattern: /api/,
+			handler: 'NetworkFirst',
+			options: {
+				cacheableResponse: {
+					status: [0, 200]
+				}
+			}
+		},
+	]
+}
+
 module.exports = withPlugins(
 	[
 		[withTypescript],
@@ -93,76 +136,75 @@ module.exports = withPlugins(
 				'/welcome/index.html': { page: '/welcome' },
 				'/profile/index.html': { page: '/profile' },
 				'/courses/index.html': { page: '/courses' },
-				'/courses/1life-digital-academy/index.html': { page: '/coursemap', query: { course: '1life-digital-academy' } },
+				'/courses/1life-digital-academy-1/index.html': { page: '/coursemap', query: { course: '1life-digital-academy-1' } },
 				'/login/index.html': { page: '/login' },
 				'/register/index.html': { page: '/register' },
-				'/courses/1life-digital-academy/who-am-i/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy', module: 'who-am-i' } },
-				'/courses/1life-digital-academy/my-magnificent-future/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy', module: 'my-magnificent-future' } },
-				'/courses/1life-digital-academy/my-plan4me/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy', module: 'my-plan4me' } },
-				'/courses/1life-digital-academy/financial-offense/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy', module: 'financial-offense' } },
-				'/courses/1life-digital-academy/financial-defense/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy', module: 'financial-defense' } },
-				'/courses/1life-digital-academy/fit-for-my-future/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy', module: 'fit-for-my-future' } },
-				'/courses/1life-digital-academy/who-am-i/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'who-am-i', lesson: 'lesson-1' } },
-				'/courses/1life-digital-academy/who-am-i/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'who-am-i', lesson: 'lesson-2' } },
-				'/courses/1life-digital-academy/who-am-i/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'who-am-i', lesson: 'lesson-3' } },
-				'/courses/1life-digital-academy/who-am-i/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'who-am-i', lesson: 'lesson-4' } },
-				'/courses/1life-digital-academy/who-am-i/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'who-am-i', lesson: 'lesson-5' } },
-				'/courses/1life-digital-academy/my-magnificent-future/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-magnificent-future', lesson: 'lesson-1' } },
-				'/courses/1life-digital-academy/my-magnificent-future/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-magnificent-future', lesson: 'lesson-2' } },
-				'/courses/1life-digital-academy/my-magnificent-future/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-magnificent-future', lesson: 'lesson-3' } },
-				'/courses/1life-digital-academy/my-magnificent-future/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-magnificent-future', lesson: 'lesson-4' } },
-				'/courses/1life-digital-academy/my-magnificent-future/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-magnificent-future', lesson: 'lesson-5' } },
-				'/courses/1life-digital-academy/my-magnificent-future/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-magnificent-future', lesson: 'lesson-6' } },
-				'/courses/1life-digital-academy/my-magnificent-future/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-magnificent-future', lesson: 'lesson-7' } },
-				'/courses/1life-digital-academy/my-plan4me/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-plan4me', lesson: 'lesson-1' } },
-				'/courses/1life-digital-academy/my-plan4me/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-plan4me', lesson: 'lesson-2' } },
-				'/courses/1life-digital-academy/my-plan4me/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-plan4me', lesson: 'lesson-3' } },
-				'/courses/1life-digital-academy/my-plan4me/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-plan4me', lesson: 'lesson-4' } },
-				'/courses/1life-digital-academy/my-plan4me/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-plan4me', lesson: 'lesson-5' } },
-				'/courses/1life-digital-academy/my-plan4me/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'my-plan4me', lesson: 'lesson-6' } },
-				'/courses/1life-digital-academy/financial-offense/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-offense', lesson: 'lesson-1' } },
-				'/courses/1life-digital-academy/financial-offense/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-offense', lesson: 'lesson-2' } },
-				'/courses/1life-digital-academy/financial-offense/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-offense', lesson: 'lesson-3' } },
-				'/courses/1life-digital-academy/financial-offense/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-offense', lesson: 'lesson-4' } },
-				'/courses/1life-digital-academy/financial-offense/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-offense', lesson: 'lesson-5' } },
-				'/courses/1life-digital-academy/financial-offense/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-offense', lesson: 'lesson-6' } },
-				'/courses/1life-digital-academy/financial-defense/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-defense', lesson: 'lesson-1' } },
-				'/courses/1life-digital-academy/financial-defense/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-defense', lesson: 'lesson-2' } },
-				'/courses/1life-digital-academy/financial-defense/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-defense', lesson: 'lesson-3' } },
-				'/courses/1life-digital-academy/financial-defense/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-defense', lesson: 'lesson-4' } },
-				'/courses/1life-digital-academy/financial-defense/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-defense', lesson: 'lesson-5' } },
-				'/courses/1life-digital-academy/financial-defense/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'financial-defense', lesson: 'lesson-6' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-1' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-2' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-3' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-4' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-5' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-6' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-7' } },
-				'/courses/1life-digital-academy/fit-for-my-future/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy', module: 'fit-for-my-future', lesson: 'lesson-7' } },
-				'/courses/my-1life-roadmap-journal/index.html': { page: '/coursemap', query: { course: 'my-1life-roadmap-journal' } },
-				'/courses/my-1life-roadmap-journal/getting-started/index.html': { page: '/coursemap/module', query: { course: 'my-1life-roadmap-journal', module: 'getting-started' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/index.html': { page: '/coursemap/module', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter' } },
-				'/courses/my-1life-roadmap-journal/getting-started/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'getting-started', lesson: 'lesson-1' } },
-				'/courses/my-1life-roadmap-journal/getting-started/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'getting-started', lesson: 'lesson-2' } },
-				'/courses/my-1life-roadmap-journal/getting-started/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'getting-started', lesson: 'lesson-3' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-1' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-2' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-3' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-4' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-5' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-6' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-7' } },
-				'/courses/my-1life-roadmap-journal/first-quarter/lesson-8/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'first-quarter', lesson: 'lesson-8' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/index.html': { page: '/coursemap/module', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-1' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-2' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-3' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-4' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-5' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-6' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-7' } },
-				'/courses/my-1life-roadmap-journal/second-quarter/lesson-8/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal', module: 'second-quarter', lesson: 'lesson-8' } },
+				'/courses/1life-digital-academy-1/who-am-i-1/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy-1', module: 'who-am-i-1' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3' } },
+				'/courses/1life-digital-academy-1/financial-offense-4/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy-1', module: 'financial-offense-4' } },
+				'/courses/1life-digital-academy-1/financial-defense-5/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy-1', module: 'financial-defense-5' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/index.html': { page: '/coursemap/module', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6' } },
+				'/courses/1life-digital-academy-1/who-am-i-1/lesson-1/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'who-am-i-1', lesson: 'lesson-1' } },
+				'/courses/1life-digital-academy-1/who-am-i-1/lesson-2/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'who-am-i-1', lesson: 'lesson-2' } },
+				'/courses/1life-digital-academy-1/who-am-i-1/lesson-3/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'who-am-i-1', lesson: 'lesson-3' } },
+				'/courses/1life-digital-academy-1/who-am-i-1/lesson-4/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'who-am-i-1', lesson: 'lesson-4' } },
+				'/courses/1life-digital-academy-1/who-am-i-1/lesson-5/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'who-am-i-1', lesson: 'lesson-5' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/lesson-6/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2', lesson: 'lesson-6' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/lesson-7/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2', lesson: 'lesson-7' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/lesson-8/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2', lesson: 'lesson-8' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/lesson-9/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2', lesson: 'lesson-9' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/lesson-10/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2', lesson: 'lesson-10' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/lesson-11/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2', lesson: 'lesson-11' } },
+				'/courses/1life-digital-academy-1/my-magnificent-future-2/lesson-12/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-magnificent-future-2', lesson: 'lesson-12' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/lesson-13/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3', lesson: 'lesson-13' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/lesson-14/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3', lesson: 'lesson-14' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/lesson-15/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3', lesson: 'lesson-15' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/lesson-16/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3', lesson: 'lesson-16' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/lesson-17/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3', lesson: 'lesson-17' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/lesson-18/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3', lesson: 'lesson-18' } },
+				'/courses/1life-digital-academy-1/my-plan4me-3/lesson-19/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'my-plan4me-3', lesson: 'lesson-19' } },
+				'/courses/1life-digital-academy-1/financial-offense-4/lesson-20/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-offense-4', lesson: 'lesson-20' } },
+				'/courses/1life-digital-academy-1/financial-offense-4/lesson-21/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-offense-4', lesson: 'lesson-21' } },
+				'/courses/1life-digital-academy-1/financial-offense-4/lesson-22/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-offense-4', lesson: 'lesson-22' } },
+				'/courses/1life-digital-academy-1/financial-offense-4/lesson-23/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-offense-4', lesson: 'lesson-23' } },
+				'/courses/1life-digital-academy-1/financial-offense-4/lesson-24/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-offense-4', lesson: 'lesson-24' } },
+				'/courses/1life-digital-academy-1/financial-offense-4/lesson-25/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-offense-4', lesson: 'lesson-25' } },
+				'/courses/1life-digital-academy-1/financial-defense-5/lesson-26/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-defense-5', lesson: 'lesson-26' } },
+				'/courses/1life-digital-academy-1/financial-defense-5/lesson-27/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-defense-5', lesson: 'lesson-27' } },
+				'/courses/1life-digital-academy-1/financial-defense-5/lesson-28/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-defense-5', lesson: 'lesson-28' } },
+				'/courses/1life-digital-academy-1/financial-defense-5/lesson-29/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-defense-5', lesson: 'lesson-29' } },
+				'/courses/1life-digital-academy-1/financial-defense-5/lesson-30/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-defense-5', lesson: 'lesson-30' } },
+				'/courses/1life-digital-academy-1/financial-defense-5/lesson-31/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'financial-defense-5', lesson: 'lesson-31' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/lesson-32/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6', lesson: 'lesson-32' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/lesson-33/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6', lesson: 'lesson-33' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/lesson-34/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6', lesson: 'lesson-34' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/lesson-35/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6', lesson: 'lesson-35' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/lesson-36/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6', lesson: 'lesson-36' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/lesson-37/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6', lesson: 'lesson-37' } },
+				'/courses/1life-digital-academy-1/fit-for-my-future-6/lesson-38/index.html': { page: '/coursemap/module/lesson', query: { course: '1life-digital-academy-1', module: 'fit-for-my-future-6', lesson: 'lesson-38' } },
+				'/courses/my-1life-roadmap-journal-2/index.html': { page: '/coursemap', query: { course: 'my-1life-roadmap-journal-2' } },
+				'/courses/my-1life-roadmap-journal-2/getting-started-7/index.html': { page: '/coursemap/module', query: { course: 'my-1life-roadmap-journal-2', module: 'getting-started-7' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/index.html': { page: '/coursemap/module', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8' } },
+				'/courses/my-1life-roadmap-journal-2/getting-started-7/lesson-39/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'getting-started-7', lesson: 'lesson-39' } },
+				'/courses/my-1life-roadmap-journal-2/getting-started-7/lesson-40/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'getting-started-7', lesson: 'lesson-40' } },
+				'/courses/my-1life-roadmap-journal-2/getting-started-7/lesson-41/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'getting-started-7', lesson: 'lesson-41' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/lesson-42/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8', lesson: 'lesson-42' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/lesson-43/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8', lesson: 'lesson-43' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/lesson-44/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8', lesson: 'lesson-44' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/lesson-45/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8', lesson: 'lesson-45' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/lesson-46/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8', lesson: 'lesson-46' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/lesson-47/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8', lesson: 'lesson-47' } },
+				'/courses/my-1life-roadmap-journal-2/first-quarter-8/lesson-48/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'first-quarter-8', lesson: 'lesson-48' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/index.html': { page: '/coursemap/module', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-49/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-49' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-50/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-50' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-51/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-51' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-52/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-52' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-53/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-53' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-54/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-54' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-55/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-55' } },
+				'/courses/my-1life-roadmap-journal-2/second-quarter-9/lesson-56/index.html': { page: '/coursemap/module/lesson', query: { course: 'my-1life-roadmap-journal-2', module: 'second-quarter-9', lesson: 'lesson-56' } },
 			}
 		}
 	}

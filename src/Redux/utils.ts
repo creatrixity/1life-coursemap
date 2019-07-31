@@ -30,13 +30,7 @@ export function getUser () {
  * @returns {Object | null}
  */
 export function getModulesData () {
-  // const modulesData =  window.localStorage.getItem('modulesData');
-
-  // if (!modulesData) {
-    const data = require('../../pages/coursemap/module/data.ts').default;
+    const data = {};
     
     return data;
-  // };
-
-  // return JSON.parse(modulesData);
 }

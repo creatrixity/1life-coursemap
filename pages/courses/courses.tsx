@@ -2,38 +2,37 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import Head from 'next/head';
-import Link from 'next/link';
 
-import { IHomePage, IStore } from '@Interfaces';
-import { AppActions } from '@Actions';
-import { ArrowRightIcon } from '@Components/Icons';
+import { ICoursePage, IStore } from '@Interfaces';
+import { CourseSelectors } from '@Selectors';
+import { slugify } from '@Helpers';
+import { CourseActions } from '@Actions';
+import { ListingsCard, LoaderScreen } from '@Components';
 import { Nav } from '@Components/Nav';
-import {
-	getToken
-} from '@Redux/utils'
+import { getToken } from '@Redux/utils'
 
-import '../coursemap/module.scss'
+import './course.scss'
 
-export class CoursesPage extends React.Component<IHomePage.IProps, IHomePage.IState> {
+export class CoursesPage extends React.Component<ICoursePage.IProps, ICoursePage.IState> {
 	courses = {};
 
-	constructor (props:IHomePage.IProps) {
+	constructor (props:ICoursePage.IProps) {
 		super(props);
 
-		this.state = {
-			userModules: []
-		}
+		this.state = {}
 	}
 
 	componentDidMount () {
-		if (!getToken()) return this.props.router.replace('/login')
+		const { router, fetchCourses } = this.props as any;
 
-		const { coursemapModules } = this.props.app;
+		if (!getToken()) return router.replace('/login')
 
-		this.courses = coursemapModules;
+		fetchCourses()
 	}
 
 	public render(): JSX.Element {
+		const { isFetchingCourses, courses } = this.props;
+
 		return (
 			<div className="d-flex flex-column">
 				<Head>
@@ -44,32 +43,20 @@ export class CoursesPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 				<section className="container">
 					<div className="row pb-4">
 						<section className="col-md-12 mb-5">
-							<div className={'d-flex align-items-center'}>
+							<div className={`d-flex align-items-center ${isFetchingCourses && 'invisible'}`}>
 								<img src={'/static/img/cap.svg'} className={'mr-3'} width={100} />
 								<h1 className={'h3 coursemap-title text-gray'}>Choose a Course</h1>
 							</div>
 						</section>
-						{	Object
-							.keys(this.courses)
-							.map((course:any, idx) => {
+
+						{isFetchingCourses && <LoaderScreen caption={'Fetching Courses'}/>}
+						{(!isFetchingCourses && courses.length) &&
+							courses
+							.map((course:ICoursePage.ICourseData, idx:number) => {
+								const { id, title, __meta__: {modules_count}} = course
 								return (
 									<section className="col-md-12 mb-4" key={idx}>
-										<div className={'text-center card coursemap-listing coursemap-listing--active'}>
-											<section className="d-flex flex-column align-items-center">
-												<h3 className={'h4 coursemap-listing__title mb-3'}>{this.courses[course].title}</h3>
-			
-												<p className="font-style-italic coursemap-listing__subtext text-gray mb-4">
-													{ this.courses[course].modules && Object.keys(this.courses[course].modules).length } modules
-												</p>
-
-												<Link href={`/courses/${course}`}>
-													<button className="btn btn-success coursemap-listing__btn">
-														<span className={'mr-2'}>Start course</span>
-														<ArrowRightIcon />
-													</button>
-												</Link>
-											</section>
-										</div>
+										{this.renderCourseItem(id, title, modules_count)}
 									</section>
 								)
 							}
@@ -79,17 +66,31 @@ export class CoursesPage extends React.Component<IHomePage.IProps, IHomePage.ISt
 			</div>
 		);
 	}
+
+	renderCourseItem(id:number, title:string, modulesCount:number) {
+		return (
+			<ListingsCard
+				actionBtnHref={`/courses/${slugify(title)}-${id}`}
+				actionBtnTitle={'Start course'}
+				title={title}
+				subtitle={`${modulesCount} modules`}
+				isActive
+			/>
+		)
+	}
 }
 
 const mapStateToProps = (state: IStore) => {
 	return {
-		app: state.app
+		app: state.app,
+		isFetchingCourses: CourseSelectors.getIsFetchingCourses(state),
+		courses: CourseSelectors.getCourses(state),
 	}
 };
 
 const mapDispatchToProps = (dispatch:Dispatch) => (
 	{
-		getUserModules: bindActionCreators(AppActions.getUserModules, dispatch)
+		fetchCourses: bindActionCreators(CourseActions.fetchCourses, dispatch)
 	}
 );
 
