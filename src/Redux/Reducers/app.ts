@@ -2,8 +2,6 @@ import { ActionConsts } from '@Definations';
 
 import { IAction, IApp } from '@Interfaces';
 
-import coursemapModules from '../../Data/CourseMapModules';
-
 /**
  * INITIAL_STATE
 */
@@ -12,7 +10,7 @@ const INITIAL_STATE: IApp.IState = {
 	hasRequestError: false,
 	isUpdatingUserLesson: false,
 	isFetchingRoadmapModules: false,
-	coursemapModules,
+	coursemapModules: {},
 	coursemapModulesContent: {},
 	coursemapModulesFeedback: {}
 };

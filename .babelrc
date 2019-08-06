@@ -14,7 +14,9 @@
             "@Actions": "./src/Actions",
             "@Components": "./src/Components",
             "@Definations": "./src/Definations",
+            "@Helpers": "./src/Helpers",
             "@Interfaces": "./src/Interfaces",
+            "@Selectors": "./src/Selectors",
             "@Reducers": "./src/Redux/Reducers",
             "@Redux": "./src/Redux"
           }

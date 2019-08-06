@@ -1,1 +1,0 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[29],{311:function(o,e,n){__NEXT_REGISTER_PAGE("/coursemap/module/data",function(){return o.exports=n(171),{page:o.exports.default}})}},[[311,1,0]]]);

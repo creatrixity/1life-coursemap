@@ -3,6 +3,7 @@ import { AppActions } from '@Actions';
 import fetch from 'isomorphic-fetch';
 import * as utils from './utils'
 import getConfig from 'next/config';
+const qs = require('query-string')
 
 const { publicRuntimeConfig: { envSpecifics } } = getConfig();
 
@@ -74,14 +75,13 @@ function updateUserModule (payload:Object) {
  * Creates a user http request.
  */
 function updateUserLesson (payload:Object) {
-  return fetch(prefixHostAddress('/v1/modules/updateUserLesson'), {
-    method: 'POST',
+  return fetch(prefixHostAddress(`/v1/modules/updateUserLesson?${qs.stringify(payload)}`), {
+    method: 'GET',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${utils.getToken()}`
     },
-    body: JSON.stringify(payload)
   })
 }
 
@@ -89,14 +89,13 @@ function updateUserLesson (payload:Object) {
  * Creates a user http request.
  */
 function getUserLessons (payload:Object) {
-  return fetch(prefixHostAddress('/v1/modules/getUserLessons'), {
-    method: 'post',
+  return fetch(prefixHostAddress(`/v1/modules/getUserLessons/?${qs.stringify(payload)}`), {
+    method: 'get',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${utils.getToken()}`
-    },
-    body: JSON.stringify(payload)
+    }
   })
 }
 
@@ -116,10 +115,12 @@ function getUserModules (payload:Object) {
 }
 
 /**
- * Fetches Roadmap Data
+ * Fetches the lesson view for a course module
+ * @param {Object} payload
+ * @returns Promise<Object>
  */
-function fetchCoursemapModule (payload:Object) {
-  return fetch(prefixHostAddress('/v1/getModuleData'), {
+function fetchCourseModuleLessonView (payload:Object) {
+  return fetch(prefixHostAddress('/v1/fetchModuleLessonView'), {
     method: 'post',
     headers: {
       'Accept': 'application/json',
@@ -127,6 +128,51 @@ function fetchCoursemapModule (payload:Object) {
       'Authorization': `Bearer ${utils.getToken()}`
     },
     body: JSON.stringify(payload)
+  })
+}
+
+/**
+ * Fetches the lesson view for a course module
+ * @param {Object} payload
+ * @returns Promise<Object>
+ */
+function fetchLessonsByModuleId(payload:any) {
+  return fetch(prefixHostAddress(`/v1/modules/${payload.moduleId}`), {
+    method: 'post',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${utils.getToken()}`
+    },
+    body: JSON.stringify(payload)
+  })
+}
+
+/**
+ * Creates a HTTP request that fetches a collection of courses.
+ * @returns Promise<Object>
+ */
+function fetchCourses () {
+  return fetch(prefixHostAddress('/v1/courses'), {
+    method: 'get',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+/**
+ * Creates a HTTP request that fetches a collection of courses.
+ * @returns Promise<Object>
+ */
+function fetchCourseModules (courseId:number) {
+  return fetch(prefixHostAddress(`/v1/courses/${courseId}/modules`), {
+    method: 'get',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
   })
 }
 
@@ -199,6 +245,10 @@ function errorHandler (dispatch:Dispatch, e:any) {
   }))
 }
 
+function toText(response:any) {
+  return response.text();
+}
+
 function toJSON(response:any) {
   return response.json();
 }
@@ -210,11 +260,15 @@ export default {
   createUser,
   checkStatus,
   errorHandler,
-  fetchCoursemapModule,
+  fetchCourses,
+  fetchCourseModules,
+  fetchCourseModuleLessonView,
+  fetchLessonsByModuleId,
   getUserLessons,
   getUserModules,
   setToken,
   setUser,
+  toText,
   toJSON,
   updateUserModule,
   updateUserLesson,

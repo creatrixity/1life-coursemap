@@ -8,6 +8,15 @@ import { IHeader } from '@Interfaces';
 import { ArrowLeftIcon } from '@Components';
 import Link from 'next/link';
 
+const styles:any = {
+	Header: {
+		position: 'fixed',
+		top: 0,
+		zIndex: 900,
+		width: '100%'
+	}
+}
+
 class Header extends React.Component<IHeader.IProps, IHeader.IState> {
     public render(): JSX.Element {
         const {
@@ -16,7 +25,7 @@ class Header extends React.Component<IHeader.IProps, IHeader.IState> {
         } = this.props;
 
         return (
-            <div className={'module-bar module-bar--lesson d-flex align-items-center'} style={{...this.props.style}}>
+            <div className={'module-bar module-bar--lesson d-flex align-items-center'} style={{...styles.Header,...this.props.style }}>
                 <section className={'container d-flex align-items-center'}>
                     <section className={'d-inline-block col-2'}>
                         <div className={'d-flex align-items-center'}>

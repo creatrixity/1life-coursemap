@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[29],{321:function(o,n,e){__NEXT_REGISTER_PAGE("/courses/course/module/data",function(){return o.exports=e(322),{page:o.exports.default}})},322:function(o,n){}},[[321,0]]]);
