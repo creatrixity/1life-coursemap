@@ -24,92 +24,92 @@ self.__precacheManifest = [
     "revision": "44b43abd9436a734f341"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\_app.js",
-    "revision": "f84106b0ac3ffc669c3f"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\_app.js",
+    "revision": "0e3f40c4437304e235c3"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\_error.js",
-    "revision": "fb93c42dd4f108a8d0fc"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\_error.js",
+    "revision": "90b7d5707942a237cfb9"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses.js",
-    "revision": "f4661934cf3d47cd15ab"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses.js",
+    "revision": "ec2fe9679a175f92e5b9"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\course.js",
-    "revision": "ac34120474175ac013a9"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\course.js",
+    "revision": "2051e582b19072e6b0e4"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\course\\course.js",
-    "revision": "a399a2de70626068f21b"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\course\\course.js",
+    "revision": "105d69b31a1338c07447"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\course\\module.js",
-    "revision": "fa859fa13ceb5025d0c3"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\course\\module.js",
+    "revision": "bd10cc385fa72ddedad5"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\course\\module\\data.js",
-    "revision": "da799b09ad4e57662cb8"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\course\\module\\data.js",
+    "revision": "daa0615dcbe3e4717b0c"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\course\\module\\lesson.js",
-    "revision": "96f7bf6737c0da1583bd"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\course\\module\\lesson.js",
+    "revision": "d739b2257a46d435563f"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\course\\module\\lesson\\lesson.js",
-    "revision": "c4446ec3c6da89890f60"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\course\\module\\lesson\\lesson.js",
+    "revision": "321a97d31b88bb552440"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\course\\module\\module.js",
-    "revision": "ed8db71f13a0e62ea77b"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\course\\module\\module.js",
+    "revision": "a85dcf06f60078bf8fd6"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\courses\\courses.js",
-    "revision": "4f497718a35804204488"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\courses\\courses.js",
+    "revision": "895d20ea443011d34cde"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\home.js",
-    "revision": "525a28dc00523c33afa3"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\home.js",
+    "revision": "334932ef1b52223ea2bf"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\home\\home.js",
-    "revision": "2712dcf28f2353cd078c"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\home\\home.js",
+    "revision": "e41c60b3ca2b7468d43d"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\index.js",
-    "revision": "b26723b32dc93aa5b696"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\index.js",
+    "revision": "dcefde632c3ea8aa17cb"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\login.js",
-    "revision": "319bc516afc7a177e9e3"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\login.js",
+    "revision": "105ef85831121f3a7c64"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\login\\login.js",
-    "revision": "b8d97fb139b546c65327"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\login\\login.js",
+    "revision": "801b60560e96ed3223ea"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\profile.js",
-    "revision": "61ada26794549a84cb54"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\profile.js",
+    "revision": "4658a15fda9509c1511a"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\profile\\profile.js",
-    "revision": "68b3893910f081c1f04d"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\profile\\profile.js",
+    "revision": "acee2e90d45301e9bb3f"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\register.js",
-    "revision": "da265014cc6b38f09ac0"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\register.js",
+    "revision": "494954923eea1b3c4277"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\register\\register.js",
-    "revision": "ab9b9c78db27b792d036"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\register\\register.js",
+    "revision": "04d29b11e75fb699698e"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\welcome.js",
-    "revision": "38a4c94207a6aad7f0e9"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\welcome.js",
+    "revision": "38fe83f68b24b2106ad4"
   },
   {
-    "url": "/_next/static\\vZctV43lGaq7ZhwCjQfGf\\pages\\welcome\\welcome.js",
-    "revision": "b6917897af9eb935cf96"
+    "url": "/_next/static\\~LBHbsh47R6OBlLjxSDrS\\pages\\welcome\\welcome.js",
+    "revision": "4966a8572aa41937842a"
   }
 ];
 
