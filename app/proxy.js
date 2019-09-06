@@ -1,6 +1,6 @@
 export default devProxy = {
 	'/api': {
-		target: 'http://134.209.63.107/api/',
+		target: 'https://api.1liferoadmap.com/api/',
 		pathRewrite: { '^/api': '/' },
 		changeOrigin: true
 	}
