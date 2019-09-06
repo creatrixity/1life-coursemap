@@ -12,7 +12,7 @@ const {
 const hostAddress = envSpecifics.api;
 
 function prefixHostAddress(url: string) {
-  return `${hostAddress}api/${url}`;
+  return `${hostAddress}/api/${url}`;
 }
 
 /**
