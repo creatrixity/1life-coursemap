@@ -111,15 +111,9 @@ function getUserLessons(payload: Object) {
  * Creates a user http request.
  */
 function getUserModules(payload: Object) {
-  return fetch(prefixHostAddress('/v1/modules/getUserModules'), {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${utils.getToken()}`
-    },
-    body: JSON.stringify(payload)
-  });
+  return fetch(
+    prefixHostAddress(`/v1/modules/getUserModules/?${qs.stringify(payload)}`)
+  );
 }
 
 /**
