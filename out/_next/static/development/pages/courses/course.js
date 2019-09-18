@@ -31109,6 +31109,7 @@ function (_React$Component) {
           userId: user.id,
           courseId: courseId
         }, function (userModules) {
+          console.log(userModules);
           userModules = userModules.filter(function (userModule) {
             return userModule.progression === 100;
           }).map(function (userModule) {
@@ -33561,7 +33562,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ 15:
+/***/ 14:
 /*!**********************************************!*\
   !*** multi ./pages/courses/course/index.tsx ***!
   \**********************************************/
@@ -33586,5 +33587,5 @@ module.exports = dll_e8427f5b250f425a56e7;
 
 /***/ })
 
-},[[15,"static/runtime/webpack.js","styles"]]]));;
+},[[14,"static/runtime/webpack.js","styles"]]]));;
 //# sourceMappingURL=course.js.map
