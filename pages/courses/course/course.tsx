@@ -5,11 +5,11 @@ import Head from 'next/head';
 
 import { ICoursePage, IModulePage, IStore } from '@Interfaces';
 import { AppActions, CourseActions } from '@Actions';
-import { ListingsCard, LoaderScreen } from '@Components';
+import { ListingsCard, LoaderScreen, withAuthenticated } from '@Components';
 import { extractIdFromSlug, slugify } from '@Helpers';
 import { Nav } from '@Components/Nav';
 import { CourseSelectors } from '@Selectors';
-import { getUser, getToken } from '@Redux/utils';
+import { getUser } from '@Redux/utils';
 
 import '../course.scss';
 
@@ -28,8 +28,6 @@ export class CoursePage extends React.Component<
   }
 
   componentDidMount() {
-    if (!getToken()) return this.props.router.replace('/login');
-
     const { fetchCourseModules, getUserModules, router } = this.props as any;
     const { course } = router.query as any;
 
@@ -146,4 +144,4 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(CoursePage);
+)(withAuthenticated(CoursePage));

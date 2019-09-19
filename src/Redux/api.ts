@@ -122,15 +122,17 @@ function getUserModules(payload: Object) {
  * @returns Promise<Object>
  */
 function fetchCourseModuleLessonView(payload: Object) {
-  return fetch(prefixHostAddress('/v1/fetchModuleLessonView'), {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${utils.getToken()}`
-    },
-    body: JSON.stringify(payload)
-  });
+  return fetch(
+    prefixHostAddress(`/v1/fetchModuleLessonView/?${qs.stringify(payload)}`),
+    {
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${utils.getToken()}`
+      }
+    }
+  );
 }
 
 /**
@@ -139,15 +141,19 @@ function fetchCourseModuleLessonView(payload: Object) {
  * @returns Promise<Object>
  */
 function fetchLessonsByModuleId(payload: any) {
-  return fetch(prefixHostAddress(`/v1/modules/${payload.moduleId}`), {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${utils.getToken()}`
-    },
-    body: JSON.stringify(payload)
-  });
+  return fetch(
+    prefixHostAddress(
+      `/v1/modules/${payload.moduleId}/?${qs.stringify(payload)}`
+    ),
+    {
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${utils.getToken()}`
+      }
+    }
+  );
 }
 
 /**
@@ -247,7 +253,8 @@ function setUser(response: any) {
  */
 function errorHandler(dispatch: Dispatch, e: any) {
   console.log(
-    'Sorry, we encountered an error trying to process your request. Please try again.'
+    'Sorry, we encountered an error trying to process your request. Please try again.',
+    `Error: ${JSON.stringify(e)}`
   );
 
   dispatch(
@@ -257,13 +264,8 @@ function errorHandler(dispatch: Dispatch, e: any) {
   );
 }
 
-function toText(response: any) {
-  return response.text();
-}
-
-function toJSON(response: any) {
-  return response.json();
-}
+const toText = (response: any) => response.text();
+const toJSON = (response: any) => response.json();
 
 export default {
   authenticateUser,

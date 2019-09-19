@@ -7,9 +7,8 @@ import { ICoursePage, IStore } from '@Interfaces';
 import { CourseSelectors } from '@Selectors';
 import { slugify } from '@Helpers';
 import { CourseActions } from '@Actions';
-import { ListingsCard, LoaderScreen } from '@Components';
+import { ListingsCard, LoaderScreen, withAuthenticated } from '@Components';
 import { Nav } from '@Components/Nav';
-import { getToken } from '@Redux/utils';
 
 import './course.scss';
 
@@ -26,10 +25,7 @@ export class CoursesPage extends React.Component<
   }
 
   componentDidMount() {
-    const { router, fetchCourses } = this.props as any;
-
-    if (!getToken()) return router.replace('/login');
-
+    const { fetchCourses } = this.props as any;
     fetchCourses();
   }
 
@@ -110,4 +106,4 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(CoursesPage);
+)(withAuthenticated(CoursesPage));
