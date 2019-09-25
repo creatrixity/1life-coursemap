@@ -17,7 +17,7 @@ const { ENV } = process.env
 
 dotenvLoad();
 
-const env = ENV in process ? ENV.trim(): 'development';
+const env = ENV in process.env ? ENV.trim(): 'production';
 
 const envSpecifics = {
   development: {
