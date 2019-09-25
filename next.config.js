@@ -59,15 +59,6 @@ const workboxOpts = {
 				}
 			}
 		},
-		{
-			urlPattern: /api/,
-			handler: 'NetworkFirst',
-			options: {
-				cacheableResponse: {
-					status: [0, 200]
-				}
-			}
-		},
 	]
 }
 
