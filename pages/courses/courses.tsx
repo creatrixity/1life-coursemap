@@ -10,7 +10,7 @@ import { CourseActions } from '@Actions';
 import { ListingsCard, LoaderScreen, withAuthenticated } from '@Components';
 import { Nav } from '@Components/Nav';
 
-import './course.scss';
+import '../course/course.scss';
 
 export class CoursesPage extends React.Component<
   ICoursePage.IProps,
@@ -81,7 +81,10 @@ export class CoursesPage extends React.Component<
   renderCourseItem(id: number, title: string, modulesCount: number) {
     return (
       <ListingsCard
-        actionBtnHref={`/courses/${slugify(title)}-${id}`}
+        actionBtnHref={{
+          link: `/course?course=${slugify(title)}-${id}`,
+          as: `/course/${slugify(title)}-${id}`
+        }}
         actionBtnTitle={'Start course'}
         title={title}
         subtitle={`${modulesCount} modules`}

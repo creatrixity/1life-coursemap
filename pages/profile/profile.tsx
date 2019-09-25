@@ -5,13 +5,13 @@ import Head from 'next/head';
 import Link from 'next/link';
 
 import { IProfilePage, IStore } from '@Interfaces';
-import { HomeActions, AppActions } from '@Actions';
+import { HomeActions, AppActions, CourseActions } from '@Actions';
 
 import './profile.scss';
 import { StarsCast, withAuthenticated } from '@Components';
 import { UserIcon } from '@Components/Icons';
 import { Nav } from '@Components/Nav';
-import { getUser } from '@Redux/utils';
+import { CourseSelectors } from '@Selectors';
 
 export class ProfilePage extends React.Component<
   IProfilePage.IProps,
@@ -26,18 +26,14 @@ export class ProfilePage extends React.Component<
   }
 
   componentDidMount() {
-    if (getUser()) {
-      this.getUserCourses(1);
-      this.getUserCourses(2);
-    }
+    this.props.fetchCourses({
+      fetch: 'modules'
+    });
   }
 
   getUserCourses(courseId: number) {
-    const user = getUser();
-
     this.props.getUserModules(
       {
-        userId: user.id,
         courseId
       },
       (userModules: any) => {
@@ -72,10 +68,11 @@ export class ProfilePage extends React.Component<
   }
 
   public render(): JSX.Element {
-    const user = this.props.user.authenticatedUser;
     const { coursemapModules } = this.props.app;
-
-    const coursesList = Object.keys(coursemapModules);
+    const {
+      courses,
+      user: { authenticatedUser }
+    } = this.props;
 
     return (
       <div className="d-flex flex-column">
@@ -105,7 +102,9 @@ export class ProfilePage extends React.Component<
               <UserIcon fill={'#77B02A'} />
             </section>
 
-            <h3 className={'text-brand h5'}>{user ? user.name : ''}</h3>
+            <h3 className={'text-brand h5'}>
+              {authenticatedUser ? authenticatedUser.name : ''}
+            </h3>
             <section className={'mb-3 d-flex flex-row justify-content-center'}>
               <StarsCast />
             </section>
@@ -124,46 +123,40 @@ export class ProfilePage extends React.Component<
             </p>
           </div>
 
-          {coursesList.map((course: any, i: number) => {
-            const currentCourse = coursemapModules[course];
-            const modulesList = Object.keys(currentCourse.modules);
+          <div className={'mx-auto col-6'}>
+            {courses &&
+              courses.map((course: any, i: number) => {
+                return (
+                  <div className={'mb-4'} key={i}>
+                    <h3 className={'h5'}>{course.title}</h3>
 
-            return (
-              <div className={'mb-3'} key={i}>
-                <h3 className={'h5'}>{currentCourse.title}</h3>
+                    <div className={''}>
+                      <ul className={'list list-unstyled ml-0'}>
+                        {course.modules.map((module: any, k: number) => {
+                          return (
+                            <li key={k} className={'mb-2'}>
+                              <section className={'d-flex'}>
+                                <Link href={'/home'}>
+                                  <a className={'w-75 mr-2 text-brand'}>
+                                    {module.title}
+                                  </a>
+                                </Link>
 
-                <div className={'container'}>
-                  <ul className={'list list-unstyled'}>
-                    {modulesList.map((module: any, k: number) => {
-                      const currentModule =
-                        coursemapModules[course].modules[module];
-
-                      return (
-                        <li key={k} className={'mb-2'}>
-                          <section className={'d-flex'}>
-                            <Link href={'/home'}>
-                              <a className={'w-75 mr-2 text-brand'}>
-                                {currentModule.title}
-                              </a>
-                            </Link>
-
-                            <div className={'w-20 d-flex align-items-center'}>
-                              <StarsCast
-                                progression={this.computeModuleProgression({
-                                  courseId: currentCourse.id,
-                                  moduleId: currentModule.id
-                                })}
-                              />
-                            </div>
-                          </section>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
-            );
-          })}
+                                <div
+                                  className={'w-20 d-flex align-items-center'}
+                                >
+                                  <StarsCast progression={50} />
+                                </div>
+                              </section>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
         </section>
       </div>
     );
@@ -174,11 +167,13 @@ const mapStateToProps = (state: IStore) => {
   return {
     home: state.home,
     app: state.app,
-    user: state.user
+    user: state.user,
+    courses: CourseSelectors.getCourses(state)
   };
 };
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
+  fetchCourses: bindActionCreators(CourseActions.fetchCourses, dispatch),
   getUserModules: bindActionCreators(AppActions.getUserModules, dispatch),
   Map: bindActionCreators(HomeActions.Map, dispatch)
 });

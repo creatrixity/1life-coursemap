@@ -6,12 +6,10 @@ import Reducers from './Reducers';
 
 import api from './api';
 
-export default () => {
-  return createStore(Reducers,
-    {},
-    composeWithDevTools(
-      applyMiddleware(
-        thunkMiddleware.withExtraArgument(api)
-      )
-    ));
+export default (initialState = {}) => {
+  return createStore(
+    Reducers,
+    initialState,
+    composeWithDevTools(applyMiddleware(thunkMiddleware.withExtraArgument(api)))
+  );
 };

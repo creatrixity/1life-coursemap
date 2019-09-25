@@ -1,115 +1,115 @@
 self.__precacheManifest = [
   {
-    "url": "/_next/static/chunks/commons.249548d4b6020f73bb51.js",
-    "revision": "1a4be5192867974f5dc7"
+    "url": "/_next/static/chunks/commons.83ca5aded520f1e2becd.js",
+    "revision": "d5a57807a4d5681d3cd7"
   },
   {
-    "url": "/_next/static/chunks/styles.c01f47dedb34953f0715.js",
-    "revision": "57cbe33f02b73c93d4fa"
+    "url": "/_next/static/chunks/styles.18fd07ab001555875251.js",
+    "revision": "c93508e1d5aea7ea678f"
   },
   {
-    "url": "/_next/static/css/commons.b0c4e4fa.chunk.css",
-    "revision": "1a4be5192867974f5dc7"
+    "url": "/_next/static/css/commons.489bb070.chunk.css",
+    "revision": "d5a57807a4d5681d3cd7"
   },
   {
-    "url": "/_next/static/css/styles.6fad50c2.chunk.css",
-    "revision": "57cbe33f02b73c93d4fa"
+    "url": "/_next/static/css/styles.cf93cd81.chunk.css",
+    "revision": "c93508e1d5aea7ea678f"
   },
   {
-    "url": "/_next/static/runtime/main-bd99944b139b5e39024b.js",
-    "revision": "c4030b9c9a45c430cdd3"
+    "url": "/_next/static/runtime/main-5b51af5a66b3006055e0.js",
+    "revision": "fad7cfca5b8ba4c01134"
   },
   {
     "url": "/_next/static/runtime/webpack-80dd23e3eafca5314609.js",
     "revision": "44b43abd9436a734f341"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\_app.js",
-    "revision": "f0c4f8ae95b9cac007f4"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\_app.js",
+    "revision": "fb554586e4ed7b3fb1f9"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\_error.js",
-    "revision": "98dcd8b59fe9141010a8"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\_error.js",
+    "revision": "0f54484e5f2d230814e6"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses.js",
-    "revision": "2af68d51965bf4707f6e"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\course.js",
+    "revision": "b09d293d3a0044dd2ac8"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\course.js",
-    "revision": "cafa9cdaaca67881192d"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\course\\course.js",
+    "revision": "47d423cfed20537e64dc"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\course\\course.js",
-    "revision": "6796b628f511f76ff79c"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\courses.js",
+    "revision": "2b3495f91dffdfd5a7a3"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\course\\module.js",
-    "revision": "3c5c7d87c7b14a4991c9"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\courses\\courses.js",
+    "revision": "bf49987165f8c78d3b11"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\course\\module\\data.js",
-    "revision": "6509384b1c0d399b21a4"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\home.js",
+    "revision": "2100f9936b5059ef9a59"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\course\\module\\lesson.js",
-    "revision": "45862d431169de3cbb3c"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\home\\home.js",
+    "revision": "bfda8354b6cbac78c59a"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\course\\module\\lesson\\lesson.js",
-    "revision": "bb751259b927794131f4"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\index.js",
+    "revision": "033b83d46dea08e5e35f"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\course\\module\\module.js",
-    "revision": "de5abc378c524c3c0c8e"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\lesson.js",
+    "revision": "42ba611f169ca8cdd49a"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\courses\\courses.js",
-    "revision": "3563814da2047bf1a68f"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\lesson\\lesson.js",
+    "revision": "70ed8aecc270dff469a9"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\home.js",
-    "revision": "8095b7ee2f039c9f971e"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\login.js",
+    "revision": "18ecebfd48f773344313"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\home\\home.js",
-    "revision": "378d36872faa15ad20f5"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\login\\login.js",
+    "revision": "da0495cbc1b0e5d83b9b"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\index.js",
-    "revision": "a0c048dd8848f7189090"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\module.js",
+    "revision": "aa7100f76a6f97c0a57d"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\login.js",
-    "revision": "21eff9209979fe6a83d7"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\module\\data.js",
+    "revision": "63c24ad9ba911f04c4e0"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\login\\login.js",
-    "revision": "242a5c4e482bbbe074fb"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\module\\module.js",
+    "revision": "7a565bb01a6554562e59"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\profile.js",
-    "revision": "f0dcc15c323a5242273d"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\profile.js",
+    "revision": "8f21043db410ea935c3e"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\profile\\profile.js",
-    "revision": "72a1b859d1e3444edb10"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\profile\\profile.js",
+    "revision": "5975526df072f6ac5180"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\register.js",
-    "revision": "a3be1d94ef907a6e050b"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\register.js",
+    "revision": "f6560edcc20c9f1b11b5"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\register\\register.js",
-    "revision": "638ac584e0c5a308fdfb"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\register\\register.js",
+    "revision": "e995760eaeb2735c791f"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\welcome.js",
-    "revision": "18b7e29108ac3f1a73ae"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\welcome.js",
+    "revision": "80c8df52cc87194b6ff0"
   },
   {
-    "url": "/_next/static\\eLnHI177mlw6gTDT139gm\\pages\\welcome\\welcome.js",
-    "revision": "e063e826c008001d764f"
+    "url": "/_next/static\\z6TgpWEX29NaxnyvetGYn\\pages\\welcome\\welcome.js",
+    "revision": "621745baa76dc10725e9"
   }
 ];
 
@@ -187,6 +187,10 @@ self.__precacheManifest = [
   {
     "url": "static/img/cap.svg",
     "revision": "eb3a3db97d2b4c438a18154ee8718e3d"
+  },
+  {
+    "url": "static/img/lock-gray.svg",
+    "revision": "3d40aa7490504ec457c0394afbb3fab3"
   },
   {
     "url": "static/img/lock.svg",

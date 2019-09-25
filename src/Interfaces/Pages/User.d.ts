@@ -3,13 +3,14 @@ import { Props } from 'react';
 //#endregion Global Imports
 
 declare module IUser {
-    export interface IProps extends Props<{}> {
-        store: any;
-    }
+  export interface IProps extends Props<{}> {
+    store: any;
+    authenticatedUser: {};
+  }
 
-    export interface IState { }
-    
-    module Actions {
-        export interface IMapPayload { }
-    }
+  export interface IState {}
+
+  module Actions {
+    export interface IMapPayload {}
+  }
 }

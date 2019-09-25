@@ -1,14 +1,22 @@
 import * as React from 'react';
-import { getToken } from '@Redux/utils';
+
+import { UserActions } from '@Actions';
 
 export function withAuthenticated(WrappedComponent: any) {
-  return class extends React.Component<{ router: any }> {
+  class AuthenticatedComp extends React.Component<{
+    router: any;
+    dispatch: any;
+  }> {
     componentDidMount() {
-      if (!getToken()) return this.props.router.replace('/login');
+      const { router, dispatch } = this.props;
+
+      dispatch(UserActions.getAuthenticatedUser(() => router.push('/login')));
     }
 
     render() {
       return <WrappedComponent {...this.props} />;
     }
-  };
+  }
+
+  return AuthenticatedComp;
 }

@@ -44,7 +44,7 @@ export class HomePage extends React.Component<
           </div>
         </section>
         <section className={'splash-screen__cta-container has-dd p-5'}>
-          <div className="col-sm-6 offset-sm-3">
+          <div className="col-md-4 offset-md-4">
             <Link href="/welcome">
               <a className="btn btn-block btn-dark splash-screen__cta">
                 Get Started
