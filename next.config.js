@@ -50,7 +50,7 @@ const workboxOpts = {
 			}
 		},
 		{
-			urlPattern: /.*\.(?:css|js)/,
+			urlPattern: /.*\.(?:css)/,
 			handler: 'NetworkFirst',
 			options: {
 				cacheName: 'assets-cache',
@@ -59,15 +59,15 @@ const workboxOpts = {
 				}
 			}
 		},
-		{
-			urlPattern: /api/,
-			handler: 'NetworkFirst',
-			options: {
-				cacheableResponse: {
-					status: [0, 200]
-				}
-			}
-		},
+		// {
+		// 	urlPattern: /api/,
+		// 	handler: 'NetworkFirst',
+		// 	options: {
+		// 		cacheableResponse: {
+		// 			status: [0, 200]
+		// 		}
+		// 	}
+		// },
 	]
 }
 
