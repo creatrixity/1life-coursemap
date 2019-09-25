@@ -7,11 +7,10 @@ import { ICoursePage, IStore } from '@Interfaces';
 import { CourseSelectors } from '@Selectors';
 import { slugify } from '@Helpers';
 import { CourseActions } from '@Actions';
-import { ListingsCard, LoaderScreen } from '@Components';
+import { ListingsCard, LoaderScreen, withAuthenticated } from '@Components';
 import { Nav } from '@Components/Nav';
-import { getToken } from '@Redux/utils';
 
-import './course.scss';
+import '../course/course.scss';
 
 export class CoursesPage extends React.Component<
   ICoursePage.IProps,
@@ -26,10 +25,7 @@ export class CoursesPage extends React.Component<
   }
 
   componentDidMount() {
-    const { router, fetchCourses } = this.props as any;
-
-    if (!getToken()) return router.replace('/login');
-
+    const { fetchCourses } = this.props as any;
     fetchCourses();
   }
 
@@ -85,7 +81,10 @@ export class CoursesPage extends React.Component<
   renderCourseItem(id: number, title: string, modulesCount: number) {
     return (
       <ListingsCard
-        actionBtnHref={`/courses/${slugify(title)}-${id}`}
+        actionBtnHref={{
+          link: `/course?course=${slugify(title)}-${id}`,
+          as: `/course/${slugify(title)}-${id}`
+        }}
         actionBtnTitle={'Start course'}
         title={title}
         subtitle={`${modulesCount} modules`}
@@ -110,4 +109,4 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(CoursesPage);
+)(withAuthenticated(CoursesPage));

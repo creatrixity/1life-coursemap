@@ -30,6 +30,20 @@ function createUser(user: Object) {
 }
 
 /**
+ * Creates a user http request.
+ */
+function getAuthenticatedUser() {
+  return fetch(prefixHostAddress('/v1/getAuthenticatedUser'), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${utils.getToken()}`
+    }
+  });
+}
+
+/**
  * Creates an entry in the journal.
  */
 function createJournalFeedback(payload: Object) {
@@ -47,15 +61,17 @@ function createJournalFeedback(payload: Object) {
  * Fetches journal feedback
  */
 function getJournalFeedback(payload: Object) {
-  return fetch(prefixHostAddress('/v1/feedback/getFeedback'), {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${utils.getToken()}`
-    },
-    body: JSON.stringify(payload)
-  });
+  return fetch(
+    prefixHostAddress(`/v1/feedback/getFeedback?${qs.stringify(payload)}`),
+    {
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${utils.getToken()}`
+      }
+    }
+  );
 }
 
 /**
@@ -77,17 +93,15 @@ function updateUserModule(payload: Object) {
  * Creates a user http request.
  */
 function updateUserLesson(payload: Object) {
-  return fetch(
-    prefixHostAddress(`/v1/modules/updateUserLesson?${qs.stringify(payload)}`),
-    {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${utils.getToken()}`
-      }
-    }
-  );
+  return fetch(prefixHostAddress(`/v1/lessons/updateUserLesson`), {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${utils.getToken()}`
+    },
+    body: JSON.stringify(payload)
+  });
 }
 
 /**
@@ -95,7 +109,7 @@ function updateUserLesson(payload: Object) {
  */
 function getUserLessons(payload: Object) {
   return fetch(
-    prefixHostAddress(`/v1/modules/getUserLessons/?${qs.stringify(payload)}`),
+    prefixHostAddress(`/v1/lessons/getUserLessons?${qs.stringify(payload)}`),
     {
       method: 'get',
       headers: {
@@ -112,7 +126,14 @@ function getUserLessons(payload: Object) {
  */
 function getUserModules(payload: Object) {
   return fetch(
-    prefixHostAddress(`/v1/modules/getUserModules/?${qs.stringify(payload)}`)
+    prefixHostAddress(`/v1/modules/getUserModules/?${qs.stringify(payload)}`),
+    {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${utils.getToken()}`
+      }
+    }
   );
 }
 
@@ -122,15 +143,17 @@ function getUserModules(payload: Object) {
  * @returns Promise<Object>
  */
 function fetchCourseModuleLessonView(payload: Object) {
-  return fetch(prefixHostAddress('/v1/fetchModuleLessonView'), {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${utils.getToken()}`
-    },
-    body: JSON.stringify(payload)
-  });
+  return fetch(
+    prefixHostAddress(`/v1/fetchModuleLessonView/?${qs.stringify(payload)}`),
+    {
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${utils.getToken()}`
+      }
+    }
+  );
 }
 
 /**
@@ -139,23 +162,27 @@ function fetchCourseModuleLessonView(payload: Object) {
  * @returns Promise<Object>
  */
 function fetchLessonsByModuleId(payload: any) {
-  return fetch(prefixHostAddress(`/v1/modules/${payload.moduleId}`), {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${utils.getToken()}`
-    },
-    body: JSON.stringify(payload)
-  });
+  return fetch(
+    prefixHostAddress(
+      `/v1/modules/${payload.moduleId}/?${qs.stringify(payload)}`
+    ),
+    {
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${utils.getToken()}`
+      }
+    }
+  );
 }
 
 /**
  * Creates a HTTP request that fetches a collection of courses.
  * @returns Promise<Object>
  */
-function fetchCourses() {
-  return fetch(prefixHostAddress('/v1/courses'), {
+function fetchCourses(payload?: any) {
+  return fetch(prefixHostAddress(`/v1/courses?${qs.stringify(payload)}`), {
     method: 'get',
     headers: {
       Accept: 'application/json',
@@ -247,7 +274,8 @@ function setUser(response: any) {
  */
 function errorHandler(dispatch: Dispatch, e: any) {
   console.log(
-    'Sorry, we encountered an error trying to process your request. Please try again.'
+    'Sorry, we encountered an error trying to process your request. Please try again.',
+    `Error: ${JSON.stringify(e)}`
   );
 
   dispatch(
@@ -257,13 +285,8 @@ function errorHandler(dispatch: Dispatch, e: any) {
   );
 }
 
-function toText(response: any) {
-  return response.text();
-}
-
-function toJSON(response: any) {
-  return response.json();
-}
+const toText = (response: any) => response.text();
+const toJSON = (response: any) => response.json();
 
 export default {
   authenticateUser,
@@ -276,6 +299,7 @@ export default {
   fetchCourseModules,
   fetchCourseModuleLessonView,
   fetchLessonsByModuleId,
+  getAuthenticatedUser,
   getUserLessons,
   getUserModules,
   setToken,

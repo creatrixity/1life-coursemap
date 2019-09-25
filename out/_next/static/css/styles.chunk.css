@@ -1,3 +1,75 @@
+.coursemap-title {
+  color: #838383; }
+
+.card.coursemap-listing {
+  position: relative;
+  border-radius: 10px;
+  padding: 4rem 0;
+  border-color: #77b02a;
+  background: #fafafa; }
+
+.card.coursemap-listing--disabled {
+  border-color: #eee; }
+  .card.coursemap-listing--disabled .coursemap-listing__title {
+    color: #8e8e8e; }
+  .card.coursemap-listing--disabled .coursemap-listing__subtext {
+    color: #9e9e9e; }
+
+.card.coursemap-listing--active {
+  background: #77b02a; }
+  .card.coursemap-listing--active .coursemap-listing__title {
+    color: white; }
+  .card.coursemap-listing--active .coursemap-listing__subtext {
+    color: #e3f3cd; }
+  .card.coursemap-listing--active .coursemap-listing__number {
+    border: 1px solid white;
+    color: white; }
+  .card.coursemap-listing--active .coursemap-listing__btn {
+    border-color: #3f5e16;
+    background: #3f5e16;
+    padding: 0.5rem 2rem; }
+
+.coursemap-listing__title,
+.coursemap-listing__subtext {
+  color: #77b02a; }
+
+.coursemap-listing__icon {
+  position: absolute;
+  top: 20px;
+  right: 20px; }
+
+.coursemap-listing__number {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #77b02a;
+  color: #77b02a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center; }
+
+.nav-link-bg {
+  background: #30363c; }
+
+.module__article__text {
+  font-size: 20px; }
+
+.module__link-card__preview {
+  background: #77B02A;
+  width: 30%; }
+
+.module__link-card__content {
+  width: 70%; }
+
+.module__link-card__title {
+  color: #77B02A; }
+
+.module__link-card--disabled .module__link-card__preview {
+  background: #eee; }
+
+.module__link-card--disabled .module__link-card__title {
+  color: #ccc; }
+
 .module-bar {
   height: 80px;
   background: #77B02A; }
@@ -34,71 +106,6 @@
     color: white; }
   .module-bar--lesson {
     margin-bottom: 35px; }
-
-.coursemap-title {
-  color: #838383; }
-
-.card.coursemap-listing {
-  position: relative;
-  border-radius: 10px;
-  padding: 4rem 0;
-  border-color: #77B02A;
-  background: #fafafa; }
-
-.card.coursemap-listing--active {
-  background: #77B02A; }
-  .card.coursemap-listing--active .coursemap-listing__title {
-    color: white; }
-  .card.coursemap-listing--active .coursemap-listing__subtext {
-    color: #e3f3cd; }
-  .card.coursemap-listing--active .coursemap-listing__number {
-    border: 1px solid white;
-    color: white; }
-  .card.coursemap-listing--active .coursemap-listing__btn {
-    border-color: #3f5e16;
-    background: #3f5e16;
-    padding: 0.5rem 2rem; }
-
-.coursemap-listing__title,
-.coursemap-listing__subtext {
-  color: #77B02A; }
-
-.coursemap-listing__icon {
-  position: absolute;
-  top: 20px;
-  right: 20px; }
-
-.coursemap-listing__number {
-  width: 50px;
-  height: 50px;
-  border: 1px solid #77B02A;
-  color: #77B02A;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center; }
-
-.nav-link-bg {
-  background: #30363c; }
-
-.module__article__text {
-  font-size: 20px; }
-
-.module__link-card__preview {
-  background: #77B02A;
-  width: 30%; }
-
-.module__link-card__content {
-  width: 70%; }
-
-.module__link-card__title {
-  color: #77B02A; }
-
-.module__link-card--disabled .module__link-card__preview {
-  background: #eee; }
-
-.module__link-card--disabled .module__link-card__title {
-  color: #ccc; }
 
 
 /*# sourceMappingURL=styles.chunk.css.map*/
